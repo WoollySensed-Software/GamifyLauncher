@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 __author__ = 'WoollySensed Software'
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 __codename__ = 'Nereus Launcher'
 
 PROJECT_PATH = Path(os.getcwd()).resolve()
@@ -15,7 +15,9 @@ ICONS = {
     'settings.png': Path(f'{_icons_path}/settings.png').resolve(), 
     'minimization.png': Path(f'{_icons_path}/minimization.png').resolve(), 
     'fullscreen.png': Path(f'{_icons_path}/fullscreen.png').resolve(), 
-    'exit.png': Path(f'{_icons_path}/exit.png').resolve()
+    'exit.png': Path(f'{_icons_path}/exit.png').resolve(), 
+    'default_game_banner.jpg': Path(f'{_icons_path}/banner.jpg').resolve(), 
+    'edit.png': Path(f'{_icons_path}/edit.png').resolve()
 }
 
 DEFAULT_CFG = {

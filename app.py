@@ -5,12 +5,12 @@ from PySide6.QtWidgets import QApplication
 
 from styles import STYLE_LIGHT, STYLE_DARK
 from settings import ICONS, CFG_PATH, __version__, __codename__, __author__
-from bin.ui.LauncherUI import LauncherUI
-from bin.handlers.ConfigurationFile import ConfigurationFileH
+from bin.ui._LauncherUI import LauncherUI
+from bin.handlers.Configuration_h import ConfigurationH
 
 
 def get_app_theme() -> str:
-    cfg_handler = ConfigurationFileH(CFG_PATH, use_exists_check=False)
+    cfg_handler = ConfigurationH(CFG_PATH, use_exists_check=False)
     cfg_handler.exists()
 
     return cfg_handler.get('app')['theme']

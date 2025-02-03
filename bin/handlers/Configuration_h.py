@@ -7,7 +7,7 @@ from WSS_ToolKit.WConfigUtils.ConfigUtils import UniversalConfigFile
 from settings import DEFAULT_CFG
 
 
-class ConfigurationFileH(UniversalConfigFile):
+class ConfigurationH(UniversalConfigFile):
 
     def __init__(self, cfg_path: Path | str, use_exists_check: bool = True):
         super().__init__(cfg_path, use_exists_check)

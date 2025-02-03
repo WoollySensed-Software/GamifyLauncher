@@ -4,25 +4,16 @@ import subprocess
 from pathlib import Path
 
 from PySide6.QtGui import QCursor, QFont, QIcon
-from PySide6.QtCore import (
-    Qt, QSize, QPoint, 
-    QIODevice
-)
-from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, 
-    QRadioButton, QButtonGroup, QLineEdit, 
-    QHBoxLayout, QVBoxLayout, QSpacerItem, 
-    QSizePolicy, QSizeGrip, QApplication, 
-    QScrollArea, QMenu
-)
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, 
+                               QHBoxLayout, QVBoxLayout, QSpacerItem, 
+                               QSizePolicy, QSizeGrip, QScrollArea, 
+                               QMenu)
 
-from settings import CFG_PATH, ICONS, __codename__, PROJECT_PATH
+from settings import CFG_PATH, ICONS, __codename__
 from bin.handlers.Configuration_h import ConfigurationH
-from bin.ui.GameSettings import GameSettingsUI
 from bin.handlers.GamesData_h import GamesDataH
-
-
-type PartOfUI = None
+from bin.ui.GameSettings import GameSettingsUI
 
 
 class LauncherUI(QWidget):
@@ -32,7 +23,7 @@ class LauncherUI(QWidget):
         self.old_pos = None
         self.default_font = QFont('Sans Serif', 16)
         self.spec_font = QFont('Sans Serif', 14)
-        
+
         self.cfg_handler = ConfigurationH(CFG_PATH, use_exists_check=False)
         self.default_display_w = self.cfg_handler.get('app')['display_w']
         self.default_display_h = self.cfg_handler.get('app')['display_h']
@@ -40,43 +31,19 @@ class LauncherUI(QWidget):
         self.games_data_h = GamesDataH()
         self.games_lib = self.games_data_h.gen_games_lib()
 
-        # параметры выбранной игры
-        self.active_game_attr = {
-            'title': None, 
-            'exe_path': None, 
-            'ico_path': None, 
-            'banner_path': None, 
-            'game_time': None
-        }
+        self.active_game_attr = {'title': None, 
+                                 'exe_path': None, 
+                                 'ico_path': None, 
+                                 'banner_path': None, 
+                                 'game_time': None}
     
     def setup_ui(self):
-        """WindowSettings"""
+        # --- настройки окна ---
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self.setMinimumSize(QSize(800, 600))  # может меняться
+        self.setMinimumSize(QSize(800, 600))
         self.resize(QSize(self.default_display_w, self.default_display_h))
         self.setObjectName('LauncherUI')
-        """/WindowSettings"""
-        
-        """NavBar"""
-        self.__navigation_bar_ui()
-        """/NavBar"""
 
-        """GeneralAreaWidget"""
-        self.__general_area_ui()
-        """/GeneralAreaWidget"""
-
-        """GeneralLayout"""
-        # --- вертикальный layout для всего окна ---
-        self.general_vlayout = QVBoxLayout(self)
-        self.general_vlayout.setContentsMargins(0, 0, 0, 0)
-        self.general_vlayout.addSpacing(0)
-
-        # --- вертикальный layout для всего окна: зависимости ---
-        self.general_vlayout.addWidget(self.widget_frame_nav_bar)
-        self.general_vlayout.addWidget(self.widget_frame_general_area)
-        """/GeneralLayout"""
-
-    def __navigation_bar_ui(self) -> PartOfUI:
         # --- панель навигации ---
         self.widget_frame_nav_bar = QWidget()
         self.widget_frame_nav_bar.setFixedHeight(30)
@@ -141,7 +108,6 @@ class LauncherUI(QWidget):
         self.nav_bar_hlayout.addWidget(self.btn_nav_bar_fullscreen)
         self.nav_bar_hlayout.addWidget(self.btn_nav_bar_exit)
 
-    def __general_area_ui(self) -> PartOfUI:
         # --- основная область ---
         self.widget_frame_general_area = QWidget()
         self.widget_frame_general_area.setObjectName('GeneralAreaFrame')
@@ -175,7 +141,7 @@ class LauncherUI(QWidget):
         self.btn_games_new_game.setFont(self.default_font)
         self.btn_games_new_game.setText('Добавить новую игру')
         self.btn_games_new_game.setObjectName('G-NewGame')
-        self.btn_games_new_game.clicked.connect(self._add_new_game)
+        self.btn_games_new_game.clicked.connect(self.add_new_game)
 
         # --- вертикальный layout для списка игр ---
         self.games_vlayout = QVBoxLayout(self.widget_frame_games)
@@ -191,6 +157,7 @@ class LauncherUI(QWidget):
         self.about_game_vlayout = QVBoxLayout(self.widget_frame_about_game)
         self.about_game_vlayout.setContentsMargins(0, 0, 0, 0)
         self.about_game_vlayout.setSpacing(0)
+        self.about_game_vlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # --- горизонтальный layout для главной области ---
         self.general_area_hlayout = QHBoxLayout(self.widget_frame_general_area)
@@ -201,165 +168,16 @@ class LauncherUI(QWidget):
         self.general_area_hlayout.addWidget(self.widget_frame_games)
         self.general_area_hlayout.addWidget(self.widget_frame_about_game)
 
-    def _add_new_game(self):
-        exe_path, title = self.games_data_h.get_exe_path()
-        self.games_data_h.add_new_game(title, exe_path)
-        self.__update_games_lib()
+        # --- вертикальный layout для всего окна ---
+        self.general_vlayout = QVBoxLayout(self)
+        self.general_vlayout.setContentsMargins(0, 0, 0, 0)
+        self.general_vlayout.addSpacing(0)
+        self.general_vlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-    def __update_games_lib(self):
-        new_lib = self.games_data_h.gen_games_lib()
-        result = new_lib[-1:]
-        self.fill_games_lib(lib=result)
-        self.games_lib = new_lib
-
-    def _display_about_game(self):
-        self.lbl_game_title = QLabel()
-        self.lbl_game_title.setFont(QFont('Sans Serif', 50))
-        self.lbl_game_title.setText(self.active_game_attr['title'])
-        self.lbl_game_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.lbl_game_title.setStyleSheet(
-            'background-image: url("bin/resources/banner.jpg");' + 
-            'color: white;')
-        self.lbl_game_title.setObjectName('AG-GameTitle')
-
-        self.ag_buttons_hlayout = QHBoxLayout()
-        self.ag_buttons_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.ag_buttons_hlayout.setSpacing(0)
-
-        self.btn_launch_game = QPushButton()
-        self.btn_launch_game.setFont(self.default_font)
-        self.btn_launch_game.setText('Запустить')
-        self.btn_launch_game.setFixedWidth(200)
-        self.btn_launch_game.setMaximumHeight(30)
-        self.btn_launch_game.setObjectName('AG-LaunchGame')
-        self.btn_launch_game.clicked.connect(self.__launch_game)
-
-        self.btn_game_settings = QPushButton()
-        self.btn_game_settings.setIcon(QIcon(
-            f'{ICONS['settings.png']}'.replace('\\', '/')))
-        self.btn_game_settings.setIconSize(QSize(30, 30))
-        self.btn_game_settings.setFixedSize(QSize(30, 30))
-        self.btn_game_settings.setObjectName('AG-GameSettings')
-        self.btn_game_settings.clicked.connect(self.__game_settings)
-
-        self.ag_buttons_hlayout.addWidget(self.btn_launch_game)
-        self.ag_buttons_hlayout.addSpacerItem(QSpacerItem(50, 30, 
-                                                          QSizePolicy.Policy.Expanding, 
-                                                          QSizePolicy.Policy.Fixed))
-        self.ag_buttons_hlayout.addWidget(self.btn_game_settings)
+        # --- вертикальный layout для всего окна: зависимости ---
+        self.general_vlayout.addWidget(self.widget_frame_nav_bar)
+        self.general_vlayout.addWidget(self.widget_frame_general_area)
     
-    def __game_settings(self):
-        self.game_settings = GameSettingsUI(self.active_game_attr)
-        self.game_settings.setup_ui()
-        self.game_settings.show()
-    
-    # TODO: сделать НОРМАЛЬНЫЙ внешний вид метода
-    # со сменой нейминга переменных
-    def __launch_game(self):
-        game_folder = Path(self.active_game_attr['exe_path']).parent
-        current_folder = os.getcwd()
-
-        # попытка запуска игры со сменой рабочей директории
-        try:
-            os.chdir(game_folder)
-            print(f'Директория при запуске игры изменена на {game_folder}')
-            process = subprocess.Popen([self.active_game_attr['exe_path']])
-            process.wait()  # ожидание завершения процесса
-        finally:
-            os.chdir(current_folder)
-            print(f'Директория после игры изменена на {current_folder}')
-
-    #TODO: experimental fuction!!!
-    def fill_games_lib(self, lib: list):
-        for game in lib:
-            btn_game_title = QPushButton()
-            btn_game_title.setFont(self.default_font)
-            btn_game_title.setText(game['title'])
-            btn_game_title.setIcon(QIcon())
-            btn_game_title.setStyleSheet('background: white; color: red;')
-            btn_game_title.setFixedHeight(30)
-            btn_game_title.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-            btn_game_title.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-            btn_game_title.setObjectName('GameTitleButton')
-            btn_game_title.customContextMenuRequested.connect(
-                lambda checked=False, 
-                g=game['title']: self._show_context_menu(g, btn_game_title.pos()))
-            btn_game_title.clicked.connect(lambda checked=False, 
-                                           g=game['title']: self.about_game(g))
-
-            # Добавление каждого элемента в layout
-            self.scroll_layout.addWidget(btn_game_title)
-
-    def _show_context_menu(self, game_title: str, pos):
-        # TODO: добавить появление меню напротив кнопки
-        # сделать это через собственный генератор, который
-        # будет брать номер названия игры из списка игр и, 
-        # исходя из этого номера, корректировать положение меню.
-        for el in self.games_lib:
-            if el['title'] == game_title:
-                self.active_game_attr['title'] = el['title']
-                self.active_game_attr['exe_path'] = el['exe_path']
-                break
-
-        global_pos = self.mapToGlobal(pos)
-        context_menu = QMenu()
-
-        action_1 = context_menu.addAction('Запустить')
-        action_2 = context_menu.addAction('Удалить из библиотеки')
-        action_3 = context_menu.addAction('Свойства')
-
-        selected_action = context_menu.exec(global_pos)
-
-        if selected_action == action_1:
-            self.__launch_game()
-        elif selected_action == action_2:
-            self.del_game_from_lib(game_title)
-            self.clear_layout()
-            self.fill_games_lib(self.games_lib)
-        elif selected_action == action_3:
-            self.__game_settings()
-            self.clear_layout()
-            self.fill_games_lib(self.games_lib)
-
-    def clear_layout(self):
-        for i in reversed(range(self.scroll_layout.count())):
-            item = self.scroll_layout.itemAt(i)
-            widget = item.widget()
-            
-            if widget is not None:
-                widget.deleteLater()
-            else:
-                self.scroll_layout.removeItem(item)
-
-    #TODO: experimental fuction!!!
-    def about_game(self, game_title: str):
-        for el in self.games_lib:
-            if el['title'] == game_title:
-                self.active_game_attr['title'] = el['title']
-                self.active_game_attr['exe_path'] = el['exe_path']
-                break
-
-        if hasattr(self, 'lbl_game_title'):
-            self.lbl_game_title.hide()
-            self.lbl_game_title.deleteLater()
-        if hasattr(self, 'btn_launch_game'):
-            self.btn_launch_game.hide()
-            self.btn_launch_game.deleteLater()
-        if hasattr(self, 'btn_game_settings'):
-            self.btn_game_settings.hide()
-            self.btn_game_settings.deleteLater()
-        
-        self._display_about_game()
-        self.about_game_vlayout.insertWidget(0, self.lbl_game_title)
-        self.about_game_vlayout.insertLayout(1, self.ag_buttons_hlayout)
-        self.about_game_vlayout.addSpacerItem(QSpacerItem(50, 50, 
-                                                          QSizePolicy.Policy.Expanding, 
-                                                          QSizePolicy.Policy.Expanding))
-
-    def del_game_from_lib(self, title: str):
-        self.games_data_h.del_game(title)
-        self.games_lib = self.games_data_h.gen_games_lib()
-
     # вызывается при нажатии кнопки мыши по форме
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -388,3 +206,157 @@ class LauncherUI(QWidget):
         if self.old_pos:
             delta = event.pos() - self.old_pos
             self.move(self.pos() + delta)
+
+    def fill_games_lib(self, lib: list):
+        for game in lib:
+            btn_game_title = QPushButton()
+            btn_game_title.setFont(QFont(self.default_font))
+            btn_game_title.setText(game['title'])
+            btn_game_title.setFixedHeight(30)
+            btn_game_title.setSizePolicy(QSizePolicy.Policy.Minimum, 
+                                         QSizePolicy.Policy.Fixed)
+            btn_game_title.setObjectName('GameTitleButton')
+            btn_game_title.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            btn_game_title.customContextMenuRequested.connect(
+                lambda checked=False, 
+                g=game['title']: self.show_context_menu(g, btn_game_title.pos()))
+            btn_game_title.clicked.connect(lambda checked=False, 
+                                           g=game['title']: self.about_game(g))
+            
+            self.scroll_layout.addWidget(btn_game_title)
+    
+    def clear_layout(self):
+        for i in reversed(range(self.scroll_layout.count())):
+            item = self.scroll_layout.itemAt(i)
+            widget = item.widget()
+            
+            if widget is not None:
+                widget.deleteLater()
+            else: self.scroll_layout.removeItem(item)
+    
+    def show_context_menu(self, game_title: str, pos):
+        # TODO: добавить появление меню напротив кнопки
+        # сделать это через собственный генератор, который
+        # будет брать номер названия игры из списка игр и, 
+        # исходя из этого номера, корректировать положение меню.
+        for el in self.games_lib:
+            if el['title'] == game_title:
+                self.active_game_attr['title'] = el['title']
+                self.active_game_attr['exe_path'] = el['exe_path']
+                break
+
+        global_pos = self.mapToGlobal(pos)
+        context_menu = QMenu()
+
+        # --- доступные действия ---
+        action_1 = context_menu.addAction('Запустить')
+        context_menu.addSeparator()
+        action_2 = context_menu.addAction('Удалить из библиотеки')
+        action_3 = context_menu.addAction('Свойства')
+
+        # print(QCursor.pos())  # TODO: использовать курсор для точки отталкивания
+        selected_action = context_menu.exec(global_pos)
+
+        if selected_action == action_1:
+            self.launch_game()
+        elif selected_action == action_2:
+            self.del_game_from_lib(game_title)
+            self.clear_layout()
+            self.fill_games_lib(self.games_lib)
+        elif selected_action == action_3:
+            self.show_game_settings()
+            self.clear_layout()
+            self.fill_games_lib(self.games_lib)
+    
+    def display_about_game(self):
+        # --- название игры ---
+        self.lbl_game_title = QLabel()
+        self.lbl_game_title.setFont(QFont('Sans Serif', 32))
+        self.lbl_game_title.setText(self.active_game_attr['title'])
+        self.lbl_game_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.lbl_game_title.setStyleSheet(
+            # f'background-image: url("{self.active_game_attr['banner_path']}");' + 
+            'color: white;')
+        self.lbl_game_title.setObjectName('AG-GameTitle')
+
+        # --- кнопка: запуск игры ---
+        self.btn_launch_game = QPushButton()
+        self.btn_launch_game.setFont(self.default_font)
+        self.btn_launch_game.setText('Запустить')
+        self.btn_launch_game.setFixedSize(QSize(200, 30))
+        self.btn_launch_game.setObjectName('AG-LaunchGame')
+        self.btn_launch_game.clicked.connect(self.launch_game)
+
+        # --- кнопка: свойства игры ---
+        self.btn_game_settings = QPushButton()
+        self.btn_game_settings.setIcon(QIcon(
+            f'{ICONS['settings.png']}'.replace('\\', '/')))
+        self.btn_game_settings.setIconSize(QSize(30, 30))
+        self.btn_game_settings.setFixedSize(QSize(30, 30))
+        self.btn_game_settings.setObjectName('AG-GameSettings')
+        self.btn_game_settings.clicked.connect(self.show_game_settings)
+
+        # --- горизонтальный layout для кнопок ---
+        self.ag_buttons_hlayout = QHBoxLayout()
+        self.ag_buttons_hlayout.setContentsMargins(0, 0, 0, 0)
+        self.ag_buttons_hlayout.setSpacing(0)
+
+        # --- горизонтальный layout для кнопок: зависимости ---
+        self.ag_buttons_hlayout.addWidget(self.btn_launch_game)
+        self.ag_buttons_hlayout.addSpacerItem(QSpacerItem(50, 30, 
+                                                          QSizePolicy.Policy.Expanding, 
+                                                          QSizePolicy.Policy.Fixed))
+        self.ag_buttons_hlayout.addWidget(self.btn_game_settings)
+    
+    def about_game(self, game_title: str):
+        for el in self.games_lib:
+            if el['title'] == game_title:
+                self.active_game_attr['title'] = el['title']
+                self.active_game_attr['exe_path'] = el['exe_path']
+                break
+
+        if hasattr(self, 'lbl_game_title'):
+            self.lbl_game_title.hide()
+            self.lbl_game_title.deleteLater()
+        if hasattr(self, 'btn_launch_game'):
+            self.btn_launch_game.hide()
+            self.btn_launch_game.deleteLater()
+        if hasattr(self, 'btn_game_settings'):
+            self.btn_game_settings.hide()
+            self.btn_game_settings.deleteLater()
+        
+        self.display_about_game()
+        self.about_game_vlayout.insertWidget(0, self.lbl_game_title)
+        self.about_game_vlayout.insertLayout(1, self.ag_buttons_hlayout)
+    
+    def add_new_game(self):
+        exe_path, title = self.games_data_h.get_exe_path()
+        self.games_data_h.add_new_game(title, exe_path)
+        self.update_games_lib()
+    
+    def update_games_lib(self):
+        new_lib = self.games_data_h.gen_games_lib()
+        result = new_lib[-1:]
+        self.fill_games_lib(lib=result)
+        self.games_lib = new_lib
+    
+    def del_game_from_lib(self, title: str):
+        self.games_data_h.del_game(title)
+        self.games_lib = self.games_data_h.gen_games_lib()
+    
+    def launch_game(self):
+        game_folder = Path(self.active_game_attr['exe_path']).parent
+        current_folder = os.getcwd()
+
+        # попытка запуска игры со сменой рабочей директории
+        try:
+            os.chdir(game_folder)
+            process = subprocess.Popen([self.active_game_attr['exe_path']])
+            process.wait()  # ожидание завершения процесса
+        finally:
+            os.chdir(current_folder)
+    
+    def show_game_settings(self):
+        self.game_settings = GameSettingsUI(self.active_game_attr)
+        self.game_settings.setup_ui()
+        self.game_settings.show()

@@ -6,6 +6,17 @@ STYLE_DARK = """
         color: white;
     }
 
+    QMenu::item {
+        color: black;
+    }
+    QMenu::item:selected {
+        color: red;
+    }
+
+    QLabel#NB-Title {
+        background: #28282B;
+        color: red;
+    }
     QWidget#NavBarFrame {
         background: #28282B;
         color: white;
