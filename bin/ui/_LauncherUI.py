@@ -3,17 +3,18 @@ import subprocess
 
 from pathlib import Path
 
-from PySide6.QtGui import QCursor, QFont, QIcon
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QCursor, QFont, QIcon, QAction
+from PySide6.QtCore import Qt, QSize, QProcess
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, 
                                QHBoxLayout, QVBoxLayout, QSpacerItem, 
                                QSizePolicy, QSizeGrip, QScrollArea, 
-                               QMenu)
+                               QMenu, QSystemTrayIcon, QStyle)
 
 from settings import CFG_PATH, ICONS, __codename__
 from bin.handlers.Configuration_h import ConfigurationH
 from bin.handlers.GamesData_h import GamesDataH
 from bin.ui.GameSettings import GameSettingsUI
+from bin.handlers.GameTimer_h import GameTimerH
 
 
 class LauncherUI(QWidget):
@@ -36,6 +37,8 @@ class LauncherUI(QWidget):
                                  'ico_path': None, 
                                  'banner_path': None, 
                                  'game_time': None}
+        
+        self.game_timer_h = GameTimerH()
     
     def setup_ui(self):
         # --- настройки окна ---
@@ -346,16 +349,21 @@ class LauncherUI(QWidget):
     
     def launch_game(self):
         game_folder = Path(self.active_game_attr['exe_path']).parent
-        current_folder = os.getcwd()
+        self.current_folder = os.getcwd()
+
+        self.process = QProcess()
+        self.process.finished.connect(self.on_finished)
 
         # попытка запуска игры со сменой рабочей директории
-        try:
-            os.chdir(game_folder)
-            process = subprocess.Popen([self.active_game_attr['exe_path']])
-            process.wait()  # ожидание завершения процесса
-        finally:
-            os.chdir(current_folder)
-    
+        os.chdir(game_folder)
+        self.process.start(self.active_game_attr['exe_path'])
+        self.game_timer_h.start()
+
+    def on_finished(self):
+        os.chdir(self.current_folder)
+        self.game_timer_h.terminate()
+        print(self.game_timer_h.time)
+
     def show_game_settings(self):
         self.game_settings = GameSettingsUI(self.active_game_attr)
         self.game_settings.setup_ui()
