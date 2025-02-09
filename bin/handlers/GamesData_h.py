@@ -22,32 +22,42 @@ class DatabaseH:
             PRIMARY KEY(id AUTOINCREMENT));
             """)
             cur.execute("""
-            CREATE TABLE IF NOT EXISTS GameAttr (
+            CREATE TABLE IF NOT EXISTS GameAttrs (
             id_title	TEXT UNIQUE,
             ico_path	TEXT DEFAULT NULL,
             banner_path	TEXT DEFAULT NULL,
-            game_time	INTEGER DEFAULT 0);
+            game_time	INTEGER DEFAULT 0,
+            last_launch TEXT DEFAULT NULL);
             """)
             con.commit()
-    
+
     def add_new_game(self, title: str, exe_path: str):
         with sql.connect(self.db_name) as con:
             cur = con.cursor()
             cur.execute("""INSERT INTO Games (title, exe_path) VALUES (?, ?)""", 
                         (title, exe_path))
             con.commit()
+            self.add_new_game_attrs(title)
+    
+    def add_new_game_attrs(self, title: str):
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""INSERT INTO GameAttrs (id_title) VALUES (?)""", (title, ))
+            con.commit()
 
     def del_game(self, title: str):
         with sql.connect(self.db_name) as con:
             cur = con.cursor()
             cur.execute("""DELETE FROM Games WHERE title=?""", (title,))
-            cur.execute("""DELETE FROM GameAttr WHERE id_title=?""", (title,))
+            cur.execute("""DELETE FROM GameAttrs WHERE id_title=?""", (title,))
             con.commit()
 
     def edit_game_title(self, old_title: str, new_title: str):
         with sql.connect(self.db_name) as con:
             cur = con.cursor()
             cur.execute("""UPDATE Games SET title=? WHERE title=?""", 
+                        (new_title, old_title))
+            cur.execute("""UPDATE GameAttrs SET id_title=? WHERE id_title=?""", 
                         (new_title, old_title))
             con.commit()
     
@@ -57,14 +67,63 @@ class DatabaseH:
             cur.execute("""UPDATE Games SET exe_path=? WHERE exe_path=?""", 
                         (new_path, old_path))
             con.commit()
+    
+    def edit_ico_path(self, title: str, new_path: str):
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""UPDATE GameAttrs SET ico_path=? WHERE id_title=?""", 
+                        (new_path, title))
+            con.commit()
 
     def get_games(self) -> list:
         with sql.connect(self.db_name) as con:
             cur = con.cursor()
             cur.execute("""SELECT title, exe_path FROM Games""")
-            games = cur.fetchall()
 
-            return games
+            return cur.fetchall()
+    
+    def change_game_time(self, title: str, time: int):
+        current_time = self.get_total_game_time(title)
+        new_time = current_time + time
+
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""UPDATE GameAttrs SET game_time=? WHERE id_title=?""", 
+                        (new_time, title))
+            con.commit()
+    
+    def change_last_launch(self, title: str, date: str):
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""UPDATE GameAttrs SET last_launch=? WHERE id_title=?""", 
+                        (date, title))
+            con.commit()
+    
+    def get_total_game_time(self, title: str) -> int:
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""SELECT game_time FROM GameAttrs WHERE id_title=?""", 
+                        (title, ))
+            
+            return cur.fetchone()[0]
+    
+    def get_last_game_launch(self, title: str) -> str:
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""SELECT last_launch FROM GameAttrs WHERE id_title=?""", 
+                        (title, ))
+            date = cur.fetchone()[0]
+            
+            return date if date is not None else 'не запускалась'
+    
+    def get_ico_path(self, title: str):
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""SELECT ico_path FROM GameAttrs WHERE id_title=?""", 
+                        (title, ))
+            path = cur.fetchone()[0]
+            
+            return path if path is not None else ''
 
 
 class GamesDataH(DatabaseH):

@@ -2,13 +2,15 @@ import os
 import subprocess
 
 from pathlib import Path
+from datetime import date
 
-from PySide6.QtGui import QCursor, QFont, QIcon, QAction
-from PySide6.QtCore import Qt, QSize, QProcess
+from PySide6.QtGui import QCursor, QFont, QIcon, QPixmap, QImage
+from PySide6.QtCore import Qt, QSize, QProcess, QPoint
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, 
                                QHBoxLayout, QVBoxLayout, QSpacerItem, 
                                QSizePolicy, QSizeGrip, QScrollArea, 
-                               QMenu, QSystemTrayIcon, QStyle)
+                               QMenu, QSystemTrayIcon, QStyle, 
+                               QFrame)
 
 from settings import CFG_PATH, ICONS, __codename__
 from bin.handlers.Configuration_h import ConfigurationH
@@ -130,6 +132,8 @@ class LauncherUI(QWidget):
         self.scroll_area = QScrollArea(self.widget_frame_games)
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
+        self.scroll_layout.setContentsMargins(0, 0, 0, 0)
+        self.scroll_layout.setSpacing(1)
         self.scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # --- установка layout для виджета скроллинга ---
@@ -212,42 +216,64 @@ class LauncherUI(QWidget):
 
     def fill_games_lib(self, lib: list):
         for game in lib:
+            lbl_icon = QLabel()
+            lbl_icon.setPixmap(QPixmap(
+                self.games_data_h.get_ico_path(game['title'])))
+            lbl_icon.setFixedSize(QSize(35, 35))
+
             btn_game_title = QPushButton()
             btn_game_title.setFont(QFont(self.default_font))
             btn_game_title.setText(game['title'])
-            btn_game_title.setFixedHeight(30)
+            btn_game_title.setFixedHeight(35)
             btn_game_title.setSizePolicy(QSizePolicy.Policy.Minimum, 
                                          QSizePolicy.Policy.Fixed)
             btn_game_title.setObjectName('GameTitleButton')
             btn_game_title.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             btn_game_title.customContextMenuRequested.connect(
-                lambda checked=False, 
-                g=game['title']: self.show_context_menu(g, btn_game_title.pos()))
-            btn_game_title.clicked.connect(lambda checked=False, 
-                                           g=game['title']: self.about_game(g))
+                lambda checked=False, g=game['title']: self.show_context_menu(g))
+            btn_game_title.clicked.connect(
+                lambda checked=False, g=game['title']: self.about_game(g))
             
-            self.scroll_layout.addWidget(btn_game_title)
-    
-    def clear_layout(self):
-        for i in reversed(range(self.scroll_layout.count())):
-            item = self.scroll_layout.itemAt(i)
-            widget = item.widget()
+            layout = QHBoxLayout()
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(0)
+
+            layout.addWidget(lbl_icon)
+            layout.addWidget(btn_game_title)
+
+            self.scroll_layout.addLayout(layout)
+            # self.scroll_layout.addWidget(btn_game_title)
+
+    def clear_layout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    sublayout = item.layout()
+                    if sublayout is not None:
+                        self.clear_layout(sublayout)
+
+    # def clear_layout(self):
+    #     print(self.scroll_layout.itemAt(2))
+    #     for i in reversed(range(self.scroll_layout.count())):
+    #         item = self.scroll_layout.itemAt(i)
+    #         widget = item.widget()
             
-            if widget is not None:
-                widget.deleteLater()
-            else: self.scroll_layout.removeItem(item)
+    #         if widget is not None:
+    #             widget.deleteLater()
+    #         else: self.scroll_layout.removeItem(item)
     
-    def show_context_menu(self, game_title: str, pos):
-        # TODO: добавить появление меню напротив кнопки
-        # сделать это через собственный генератор, который
-        # будет брать номер названия игры из списка игр и, 
-        # исходя из этого номера, корректировать положение меню.
+    def show_context_menu(self, game_title: str):
         for el in self.games_lib:
             if el['title'] == game_title:
                 self.active_game_attr['title'] = el['title']
                 self.active_game_attr['exe_path'] = el['exe_path']
                 break
 
+        pos = QCursor.pos() - QPoint(310, 180)
         global_pos = self.mapToGlobal(pos)
         context_menu = QMenu()
 
@@ -257,18 +283,17 @@ class LauncherUI(QWidget):
         action_2 = context_menu.addAction('Удалить из библиотеки')
         action_3 = context_menu.addAction('Свойства')
 
-        # print(QCursor.pos())  # TODO: использовать курсор для точки отталкивания
         selected_action = context_menu.exec(global_pos)
 
         if selected_action == action_1:
             self.launch_game()
         elif selected_action == action_2:
             self.del_game_from_lib(game_title)
-            self.clear_layout()
+            self.clear_layout(self.scroll_layout)
             self.fill_games_lib(self.games_lib)
         elif selected_action == action_3:
             self.show_game_settings()
-            self.clear_layout()
+            self.clear_layout(self.scroll_layout)
             self.fill_games_lib(self.games_lib)
     
     def display_about_game(self):
@@ -290,6 +315,28 @@ class LauncherUI(QWidget):
         self.btn_launch_game.setObjectName('AG-LaunchGame')
         self.btn_launch_game.clicked.connect(self.launch_game)
 
+        # --- последний запуск ---
+        self.lbl_last_game_launch = QLabel()
+        self.lbl_last_game_launch.setFont(self.default_font)
+        self.lbl_last_game_launch.setText(
+            f'Последний запуск: {self.games_data_h.get_last_game_launch(
+                self.active_game_attr['title'])}')
+        self.lbl_last_game_launch.setFixedSize(QSize(400, 30))
+        self.lbl_last_game_launch.setFrameShape(QFrame.Box)
+        self.lbl_last_game_launch.setStyleSheet('color: white; border: 1px solid black;')
+        self.lbl_last_game_launch.setObjectName('AG-LastGameLaunch')
+
+        # --- кол-во игрового времени ---
+        self.lbl_total_game_time = QLabel()
+        self.lbl_total_game_time.setFont(self.default_font)
+        self.lbl_total_game_time.setText(
+            f'Вы играли: {self.time_formatting()}')
+        self.lbl_total_game_time.setFixedSize(QSize(250, 30))
+        self.lbl_total_game_time.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.lbl_total_game_time.setFrameShape(QFrame.Box)
+        self.lbl_total_game_time.setStyleSheet('color: white; border: 1px solid black;')
+        self.lbl_total_game_time.setObjectName('AG-TotalGameTime')
+
         # --- кнопка: свойства игры ---
         self.btn_game_settings = QPushButton()
         self.btn_game_settings.setIcon(QIcon(
@@ -306,10 +353,23 @@ class LauncherUI(QWidget):
 
         # --- горизонтальный layout для кнопок: зависимости ---
         self.ag_buttons_hlayout.addWidget(self.btn_launch_game)
+        self.ag_buttons_hlayout.addWidget(self.lbl_last_game_launch)
+        self.ag_buttons_hlayout.addWidget(self.lbl_total_game_time)
         self.ag_buttons_hlayout.addSpacerItem(QSpacerItem(50, 30, 
                                                           QSizePolicy.Policy.Expanding, 
                                                           QSizePolicy.Policy.Fixed))
         self.ag_buttons_hlayout.addWidget(self.btn_game_settings)
+    
+    def time_formatting(self) -> str:
+        time = self.games_data_h.get_total_game_time(self.active_game_attr['title'])
+
+        if time <= 60:
+            text = f'{time} с.'
+        elif 60 < time <= 3600:
+            text = f'{round(time/60, 2)} мин.'
+        else: text = f'{round(time/3600, 2)} ч.'
+
+        return text
     
     def about_game(self, game_title: str):
         for el in self.games_lib:
@@ -327,6 +387,12 @@ class LauncherUI(QWidget):
         if hasattr(self, 'btn_game_settings'):
             self.btn_game_settings.hide()
             self.btn_game_settings.deleteLater()
+        if hasattr(self, 'lbl_total_game_time'):
+            self.lbl_total_game_time.hide()
+            self.lbl_total_game_time.deleteLater()
+        if hasattr(self, 'lbl_last_game_launch'):
+            self.lbl_last_game_launch.hide()
+            self.lbl_last_game_launch.deleteLater()
         
         self.display_about_game()
         self.about_game_vlayout.insertWidget(0, self.lbl_game_title)
@@ -362,9 +428,13 @@ class LauncherUI(QWidget):
     def on_finished(self):
         os.chdir(self.current_folder)
         self.game_timer_h.terminate()
-        print(self.game_timer_h.time)
+        dt_ = date.today()
+        self.games_data_h.change_last_launch(self.active_game_attr['title'], 
+                                             f'{dt_:%d.%m.%Y}')
+        self.games_data_h.change_game_time(self.active_game_attr['title'], 
+                                           self.game_timer_h.get_time())
 
     def show_game_settings(self):
-        self.game_settings = GameSettingsUI(self.active_game_attr)
+        self.game_settings = GameSettingsUI(self, self.active_game_attr)
         self.game_settings.setup_ui()
         self.game_settings.show()

@@ -7,9 +7,14 @@ class GameTimerH(QThread):
 
     def __init__(self):
         super().__init__()
-        self.time = 0
+        self.__time = 0
     
     def run(self):
+        self.__time = 0
+
         while True:
-            self.time += 1
+            self.__time += 1
             time.sleep(1)
+
+    def get_time(self):
+        return self.__time

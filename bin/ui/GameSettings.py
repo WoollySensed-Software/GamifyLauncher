@@ -22,7 +22,7 @@ type PartOfUI = None
 
 class GameSettingsUI(QWidget):
 
-    def __init__(self, game_attr: dict):
+    def __init__(self, launcher: object, game_attr: dict):
         super().__init__()
         self.old_pos = None
         self.default_font = QFont('Sans Serif', 16)
@@ -31,6 +31,8 @@ class GameSettingsUI(QWidget):
         self.games_data_h = GamesDataH()
         self.game_attr = game_attr
 
+        self.launcher = launcher
+    
     def setup_ui(self):
         """WindowSettings"""
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
@@ -174,7 +176,7 @@ class GameSettingsUI(QWidget):
         self.btn_change_ico_path.setIconSize(QSize(20, 20))
         self.btn_change_ico_path.setFixedSize(QSize(30, 30))
         self.btn_change_ico_path.setObjectName('GS-EditButtons')
-        self.btn_change_ico_path.clicked.connect(None)
+        self.btn_change_ico_path.clicked.connect(self._change_ico_path)
 
         # --- размещение в горизонтальный layout ---
         self.ico_path_hlayout = QHBoxLayout()
@@ -238,7 +240,7 @@ class GameSettingsUI(QWidget):
         self.btn_apply.setText('Применить')
         self.btn_apply.setFixedHeight(30)
         self.btn_apply.setObjectName('GS-ControlButtons')
-        self.btn_apply.clicked.connect(None)
+        self.btn_apply.clicked.connect(self.apply)
 
         # --- размещение в горизонтальный layout ---
         self.control_buttons = QHBoxLayout()
@@ -258,10 +260,21 @@ class GameSettingsUI(QWidget):
                                         str(new_exe_path))
 
     def _change_ico_path(self):
-        pass
+        new_ico_path = Path(QFileDialog.getOpenFileName(filter='*.ico')[0]).resolve()
+        self.games_data_h.edit_ico_path(self.game_attr['title'], str(new_ico_path))
 
     def _change_banner_path(self):
         pass
+    
+    def apply(self):
+        self.games_data_h.edit_game_title(self.game_attr['title'], 
+                                          self.ted_game_title.toPlainText())
+        
+        # вынужненные меры, я не знаю как сделать иначе :(
+        self.launcher.active_game_attr['title'] = self.ted_game_title.toPlainText()
+        self.launcher.games_lib = self.games_data_h.gen_games_lib()
+        self.launcher.clear_layout(self.launcher.scroll_layout)
+        self.launcher.fill_games_lib(self.launcher.games_lib)
 
     # вызывается при нажатии кнопки мыши по форме
     def mousePressEvent(self, event):
