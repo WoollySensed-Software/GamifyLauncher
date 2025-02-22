@@ -3,11 +3,12 @@ from pathlib import Path
 
 
 __author__ = 'WoollySensed Software'
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 __codename__ = 'Gamify Launcher'
 
 PROJECT_PATH = Path(os.getcwd()).resolve()
 CFG_PATH = Path(f'{PROJECT_PATH}/cfg/config.cfg').resolve()
+GAMES_LIB_PATH = Path(f'{PROJECT_PATH}/library.db').resolve()
 
 _icons_path = f'{PROJECT_PATH}/bin/resources'
 ICONS = {
@@ -16,14 +17,18 @@ ICONS = {
     'minimization.png': Path(f'{_icons_path}/minimization.png').resolve(), 
     'fullscreen.png': Path(f'{_icons_path}/fullscreen.png').resolve(), 
     'exit.png': Path(f'{_icons_path}/exit.png').resolve(), 
-    'default_game_banner.jpg': Path(f'{_icons_path}/banner.jpg').resolve(), 
-    'edit.png': Path(f'{_icons_path}/edit.png').resolve()
+    'edit.png': Path(f'{_icons_path}/edit.png').resolve(), 
+    'g_icon.png': Path(f'{_icons_path}/g_icon.png').resolve(), 
+    'g_banner.png': Path(f'{_icons_path}/g_banner.png').resolve(), 
+    'folder.png': Path(f'{_icons_path}/folder.png').resolve(), 
+    'file-import.png': Path(f'{_icons_path}/file-import.png').resolve(), 
+    'export-file.png': Path(f'{_icons_path}/export-file.png').resolve()
 }
 
 DEFAULT_CFG = {
     'app': {
         'theme': 'Dark', 
-        'display_w': 800, 
-        'display_h': 600 
+        'display_w': 1280, 
+        'display_h': 720 
     }
 }

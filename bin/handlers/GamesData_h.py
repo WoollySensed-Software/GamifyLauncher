@@ -5,6 +5,8 @@ from typing import Any
 
 from PySide6.QtWidgets import QFileDialog
 
+from settings import ICONS
+
 
 class DatabaseH:
 
@@ -74,6 +76,13 @@ class DatabaseH:
             cur.execute("""UPDATE GameAttrs SET ico_path=? WHERE id_title=?""", 
                         (new_path, title))
             con.commit()
+    
+    def edit_banner_path(self, title: str, new_path: str):
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""UPDATE GameAttrs SET banner_path=? WHERE id_title=?""", 
+                        (new_path, title))
+            con.commit()
 
     def get_games(self) -> list:
         with sql.connect(self.db_name) as con:
@@ -123,7 +132,25 @@ class DatabaseH:
                         (title, ))
             path = cur.fetchone()[0]
             
-            return path if path is not None else ''
+            return path if path is not None else ICONS['g_icon.png']
+    
+    def get_banner_path(self, title: str):
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""SELECT banner_path FROM GameAttrs WHERE id_title=?""", 
+                        (title, ))
+            path = cur.fetchone()[0]
+
+            return path if path is not None else ICONS['g_banner.png']
+    
+    def get_game_folder(self, title: str):
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute("""SELECT exe_path FROM Games WHERE title=?""", 
+                        (title, ))
+            path = cur.fetchone()[0]
+
+            return Path(path).resolve().parent
 
 
 class GamesDataH(DatabaseH):
@@ -132,11 +159,15 @@ class GamesDataH(DatabaseH):
         super().__init__()
         self.check_db_exists()
 
-    def get_exe_path(self) -> tuple[str]:
-        exe_path = Path(QFileDialog.getOpenFileName(filter='*.exe')[0]).resolve()
-        title = exe_path.name
+    def get_exe_path(self) -> tuple[str] | None:
+        exe_path = QFileDialog.getOpenFileName(filter='*.exe')[0]
 
-        return (str(exe_path), title)
+        if len(exe_path):
+            exe_path = Path(exe_path).resolve()
+            title = exe_path.name
+
+            return (str(exe_path), title)
+        else: return None
 
     def gen_games_lib(self) -> list[dict[str, str]]:
         return [{'title': game[0], 'exe_path': game[1]} for game in self.get_games()]

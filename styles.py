@@ -15,7 +15,7 @@ STYLE_DARK = """
 
     QLabel#NB-Title {
         background: #28282B;
-        color: red;
+        color: #FFC300;
     }
     QWidget#NavBarFrame {
         background: #28282B;
