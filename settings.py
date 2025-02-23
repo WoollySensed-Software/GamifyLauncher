@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 __author__ = 'WoollySensed Software'
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 __codename__ = 'Gamify Launcher'
 
 PROJECT_PATH = Path(os.getcwd()).resolve()
@@ -21,14 +21,16 @@ ICONS = {
     'g_icon.png': Path(f'{_icons_path}/g_icon.png').resolve(), 
     'g_banner.png': Path(f'{_icons_path}/g_banner.png').resolve(), 
     'folder.png': Path(f'{_icons_path}/folder.png').resolve(), 
-    'file-import.png': Path(f'{_icons_path}/file-import.png').resolve(), 
-    'export-file.png': Path(f'{_icons_path}/export-file.png').resolve()
+    'switch-on.png': Path(f'{_icons_path}/switch-on.png').resolve(), 
+    'switch-off.png': Path(f'{_icons_path}/switch-off.png').resolve()
 }
 
 DEFAULT_CFG = {
     'app': {
         'theme': 'Dark', 
         'display_w': 1280, 
-        'display_h': 720 
+        'display_h': 720, 
+        'use_tray': True, 
+        'use_games_banner': False
     }
 }

@@ -6,16 +6,27 @@ from PySide6.QtWidgets import (QWidget, QLabel, QPushButton,
                                QHBoxLayout, QVBoxLayout, QSpacerItem, 
                                QSizePolicy, QSizeGrip, QScrollArea, 
                                QMenu, QSystemTrayIcon, QStyle, 
-                               QFrame, QFileDialog, QComboBox)
+                               QFrame, QFileDialog, QComboBox, 
+                               QApplication)
 
+from styles import STYLE_DARK, STYLE_LIGHT
 from settings import ICONS, CFG_PATH, PROJECT_PATH, GAMES_LIB_PATH
 from bin.handlers.Configuration_h import ConfigurationH
 from bin.handlers.GamesData_h import GamesDataH
 
 
+class Separator(QLabel):
+
+    def __init__(self):
+        super().__init__()
+
+        self.setFixedHeight(1)
+        self.setStyleSheet('background: #28282B;')
+
+
 class AppSettingsUI(QWidget):
 
-    def __init__(self, launcher: object):
+    def __init__(self, launcher: QWidget, app: QApplication):
         super().__init__()
         self.old_pos = None
         self.default_font = QFont('Sans Serif', 16)
@@ -24,13 +35,16 @@ class AppSettingsUI(QWidget):
         self.cfg_handler = ConfigurationH(CFG_PATH, use_exists_check=False)
         self.games_data_h = GamesDataH()
         self.launcher = launcher
+        self.app = app
+        self.tray_mode_state = self.cfg_handler.get('app')['use_tray']
+        self.games_banner_state = self.cfg_handler.get('app')['use_games_banner']
     
     def setup_ui(self):
         # --- настройки окна ---
         self.setWindowTitle('Настройки')
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | 
                             Qt.WindowType.WindowStaysOnTopHint)
-        self.setMaximumSize(QSize(800, 600))
+        # self.setMaximumSize(QSize(800, 600))
         self.setObjectName('AppSettingsUI')
 
         # --- панель навигации ---
@@ -83,10 +97,10 @@ class AppSettingsUI(QWidget):
         # --- выбор: изменение темы приложения ---
         self.lbl_choose_theme = QLabel()
         self.lbl_choose_theme.setFont(self.default_font)
-        self.lbl_choose_theme.setText('Выбор темы\nприложения')
+        self.lbl_choose_theme.setText('Выбор темы приложения')
         self.lbl_choose_theme.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.lbl_choose_theme.setFixedHeight(50)
-        self.lbl_choose_theme.setObjectName('lbl_choose_theme')
+        self.lbl_choose_theme.setFixedHeight(30)
+        self.lbl_choose_theme.setObjectName('AS-OptionLabel')
 
         self.items_choose_theme = ['Light', 'Dark']
         self.cb_choose_theme = QComboBox()
@@ -94,8 +108,11 @@ class AppSettingsUI(QWidget):
         self.cb_choose_theme.addItems(self.items_choose_theme)
         self.cb_choose_theme.setCurrentIndex(
             self.items_choose_theme.index(self.cfg_handler.get('app')['theme']))
-        self.cb_choose_theme.setFixedSize(QSize(150, 50))
+        # self.cb_choose_theme.setFixedSize(QSize(150, 30))
+        self.cb_choose_theme.setFixedHeight(30)
+        self.cb_choose_theme.setMinimumWidth(100)
         self.cb_choose_theme.setObjectName('cb_choose_theme')
+        self.cb_choose_theme.currentTextChanged.connect(self.change_app_theme)
 
         # --- горизонтальный layout для выбора темы ---
         self.choose_theme_hlayout = QHBoxLayout()
@@ -108,31 +125,41 @@ class AppSettingsUI(QWidget):
                                             alignment=Qt.AlignmentFlag.AlignRight)
 
         # --- импорт/экспорт библиотеки игр ---
+        self.lbl_import_export_lib = QLabel()
+        self.lbl_import_export_lib.setFont(self.default_font)
+        self.lbl_import_export_lib.setText('Библиотека игр')
+        self.lbl_import_export_lib.setFixedHeight(30)
+        self.lbl_import_export_lib.setObjectName('AS-OptionLabel')
+
         self.btn_import_lib = QPushButton()
-        # self.btn_import_lib.setFont(self.default_font)
-        # self.btn_import_lib.setText('Импорт\nбиблиотеки')
-        self.btn_import_lib.setIcon(QIcon(
-            f'{ICONS['file-import.png']}'.replace('\\', '/')))
-        self.btn_import_lib.setIconSize(QSize(50, 50))
-        self.btn_import_lib.setFixedSize(QSize(50, 50))
-        self.btn_import_lib.setStyleSheet('background: white; border-radius: 5%;')
-        # self.btn_import_lib.setFixedHeight(50)
-        # self.btn_import_lib.setMinimumWidth(150)
-        self.btn_import_lib.setObjectName('btn_import_lib')
+        self.btn_import_lib.setFont(self.default_font)
+        self.btn_import_lib.setText('импорт')
+        self.btn_import_lib.setFixedHeight(30)
+        self.btn_import_lib.setFixedWidth(100)
+        self.btn_import_lib.setSizePolicy(QSizePolicy.Policy.Minimum, 
+                                          QSizePolicy.Policy.Fixed)
+        self.btn_import_lib.setObjectName('AS-ImportExportBtn')
         self.btn_import_lib.clicked.connect(self.import_lib)
 
         self.btn_export_lib = QPushButton()
-        self.btn_export_lib.setIcon(QIcon(
-            f'{ICONS['export-file.png']}'.replace('\\', '/')))
-        self.btn_export_lib.setIconSize(QSize(50, 50))
-        self.btn_export_lib.setFixedSize(QSize(50, 50))
-        self.btn_export_lib.setStyleSheet('background: white; border-radius: 5%;')
-        # self.btn_export_lib.setFont(self.default_font)
-        # self.btn_export_lib.setText('Экспорт\nбиблиотеки')
-        # self.btn_export_lib.setFixedHeight(50)
-        # self.btn_export_lib.setMinimumWidth(150)
-        self.btn_export_lib.setObjectName('btn_export_lib')
+        self.btn_export_lib.setFont(self.default_font)
+        self.btn_export_lib.setText('экспорт')
+        self.btn_export_lib.setFixedHeight(30)
+        self.btn_export_lib.setFixedWidth(100)
+        self.btn_export_lib.setSizePolicy(QSizePolicy.Policy.Minimum, 
+                                          QSizePolicy.Policy.Fixed)
+        self.btn_export_lib.setObjectName('AS-ImportExportBtn')
         self.btn_export_lib.clicked.connect(self.export_lib)
+
+        # --- горизонтальный layout для кнопок импорта/экспорта ---
+        self.btns_import_export_vlayout = QVBoxLayout()
+        self.btns_import_export_vlayout.setContentsMargins(0, 0, 0, 0)
+        self.btns_import_export_vlayout.setSpacing(0)
+        self.btns_import_export_vlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # --- горизонтальный layout для кнопок импорта/экспорта: зависимости ---
+        self.btns_import_export_vlayout.addWidget(self.btn_import_lib)
+        self.btns_import_export_vlayout.addWidget(self.btn_export_lib)
 
         # --- горизонтальный layout для импорта/экспорта lib ---
         self.import_export_hlayout = QHBoxLayout()
@@ -140,27 +167,24 @@ class AppSettingsUI(QWidget):
         self.import_export_hlayout.setSpacing(10)
 
         # --- горизонтальный layout для импорта/экспорта lib: зависимости ---
-        self.import_export_hlayout.addWidget(self.btn_import_lib, 
-                                             alignment=Qt.AlignmentFlag.AlignLeft)
-        self.import_export_hlayout.addWidget(self.btn_export_lib, 
-                                             alignment=Qt.AlignmentFlag.AlignRight)
+        self.import_export_hlayout.addWidget(self.lbl_import_export_lib)
+        self.import_export_hlayout.addLayout(self.btns_import_export_vlayout)
 
         # --- выбор: сворачивание приложения в трей ---
         self.lbl_use_tray = QLabel()
         self.lbl_use_tray.setFont(self.default_font)
-        self.lbl_use_tray.setText('Сворачивать приложение\n' + 
-                                     'в трей при закрытии')
+        self.lbl_use_tray.setText('Сворачивать приложение в трей при закрытии')
         self.lbl_use_tray.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.lbl_use_tray.setFixedHeight(50)
-        self.lbl_use_tray.setObjectName('lbl_use_tray')
+        self.lbl_use_tray.setFixedHeight(30)
+        self.lbl_use_tray.setObjectName('AS-OptionLabel')
 
         self.btn_toggle_use_tray = QPushButton()
-        self.btn_toggle_use_tray.setIcon(QIcon(
-            r'bin\resources\switch-on.png'.replace('\\', '/')))
-        self.btn_toggle_use_tray.setIconSize(QSize(75, 50))
-        self.btn_toggle_use_tray.setFixedSize(QSize(75, 50))
-        self.btn_toggle_use_tray.setObjectName('btn_toggle_use_tray')
-        self.btn_toggle_use_tray.clicked.connect(None)
+        self.btn_toggle_use_tray.setIcon(self.set_toggle_state(self.tray_mode_state))
+        self.btn_toggle_use_tray.setIconSize(QSize(70, 40))
+        self.btn_toggle_use_tray.setFixedSize(QSize(60, 30))
+        self.btn_toggle_use_tray.setObjectName('AS-ToggleBtn')
+        # self.btn_toggle_use_tray.setStyleSheet('background: transparent;')
+        self.btn_toggle_use_tray.clicked.connect(self.use_tray_mode)
 
         # --- горизонтальный layout для трея ---
         self.tray_hlayout = QHBoxLayout()
@@ -176,20 +200,19 @@ class AppSettingsUI(QWidget):
         # --- отображение баннера для игры ---
         self.lbl_display_game_banner = QLabel()
         self.lbl_display_game_banner.setFont(self.default_font)
-        self.lbl_display_game_banner.setText('Отображать баннер у игр\n' + 
-                                                    '(экспериментально)')
+        self.lbl_display_game_banner.setText(
+            'Отображать баннер у игр (экспериментально)')
         self.lbl_display_game_banner.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.lbl_display_game_banner.setFixedHeight(50)
-        self.lbl_display_game_banner.setObjectName('lbl_display_game_banner')
+        self.lbl_display_game_banner.setFixedHeight(30)
+        self.lbl_display_game_banner.setObjectName('AS-OptionLabel')
 
         self.btn_toggle_display_game_banner = QPushButton()
-        self.btn_toggle_display_game_banner.setIcon(QIcon(
-            r'bin\resources\switch-on.png'.replace('\\', '/')))
-        self.btn_toggle_display_game_banner.setIconSize(QSize(75, 50))
-        self.btn_toggle_display_game_banner.setFixedSize(QSize(75, 50))
-        self.btn_toggle_display_game_banner.setObjectName(
-            'btn_toggle_display_game_banner')
-        self.btn_toggle_display_game_banner.clicked.connect(None)
+        self.btn_toggle_display_game_banner.setIcon(self.set_toggle_state(self.games_banner_state))
+        self.btn_toggle_display_game_banner.setIconSize(QSize(70, 40))
+        self.btn_toggle_display_game_banner.setFixedSize(QSize(60, 30))
+        self.btn_toggle_display_game_banner.setObjectName('AS-ToggleBtn')
+        # self.btn_toggle_display_game_banner.setStyleSheet('background: transparent;')
+        self.btn_toggle_display_game_banner.clicked.connect(self.use_games_banner)
 
         # --- горизонтальный layout для баннера игр ---
         self.game_banner_hlayout = QHBoxLayout()
@@ -211,23 +234,26 @@ class AppSettingsUI(QWidget):
 
         # --- вертикальный layout для главной области ---
         self.general_area_vlayout = QVBoxLayout(self.widget_frame_general_area)
-        self.general_area_vlayout.setContentsMargins(0, 0, 0, 0)
-        self.general_area_vlayout.setSpacing(0)
+        self.general_area_vlayout.setContentsMargins(10, 10, 10, 10)
+        self.general_area_vlayout.setSpacing(5)
 
         # --- вертикальный layout для главной области: зависимости ---
+        self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addLayout(self.choose_theme_hlayout)
-        self.general_area_vlayout.addSpacing(10)
+        self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addLayout(self.import_export_hlayout)
-        self.general_area_vlayout.addSpacing(10)
+        self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addLayout(self.tray_hlayout)
-        self.general_area_vlayout.addSpacing(10)
+        self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addLayout(self.game_banner_hlayout)
+        self.general_area_vlayout.addWidget(Separator())
 
         # --- вертикальный layout для всего окна ---
         self.general_vlayout = QVBoxLayout(self)
         self.general_vlayout.setContentsMargins(0, 0, 0, 0)
         self.general_vlayout.setSpacing(0)
         self.general_vlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.general_vlayout.setObjectName('AS-GeneralVLayout')
 
         # --- вертикальный layout для всего окна: зависимости ---
         self.general_vlayout.addWidget(self.widget_frame_nav_bar)
@@ -263,7 +289,9 @@ class AppSettingsUI(QWidget):
             self.move(self.pos() + delta)
 
     def export_lib(self):
-        download_dir, _ = QFileDialog.getSaveFileName(filter='SQLite Files (*.db)')
+        download_dir, _ = QFileDialog.getSaveFileName(
+            caption='Выберите место, куда сохранить файл', 
+            filter='SQLite Files (*.db)')
 
         if download_dir:
             try:
@@ -276,7 +304,9 @@ class AppSettingsUI(QWidget):
                 print(f"Произошла ошибка при экспорте базы данных: {e}")
     
     def import_lib(self):
-        lib_path, _ = QFileDialog.getOpenFileName(filter='SQLite Files (*.db)')
+        lib_path, _ = QFileDialog.getOpenFileName(
+            caption='Выберите файл "library.db", который импортируется', 
+            filter='SQLite Files (*.db)')
 
         if lib_path:
             try:
@@ -292,3 +322,40 @@ class AppSettingsUI(QWidget):
                 self.launcher.games_lib = self.games_data_h.gen_games_lib()
                 self.launcher.clear_layout(self.launcher.scroll_layout)
                 self.launcher.fill_games_lib(self.launcher.games_lib)
+
+    def set_toggle_state(self, cfg_state: bool):
+        if cfg_state:
+            return QIcon(f'{ICONS['switch-on.png']}'.replace('\\', '/'))
+        else: return QIcon(f'{ICONS['switch-off.png']}'.replace('\\', '/'))
+
+    def change_app_theme(self):
+        theme = self.cb_choose_theme.currentText()
+
+        if theme == 'Dark':
+            print('Применена темная тема!')
+            self.cfg_handler.set('app', {'theme': 'Dark'})
+            self.app.setStyleSheet(STYLE_DARK)
+        elif theme == 'Light':
+            print('Применена светлая тема!')
+            self.cfg_handler.set('app', {'theme': 'Light'})
+            self.app.setStyleSheet(STYLE_LIGHT)
+
+    def use_tray_mode(self):
+        current_state = self.tray_mode_state
+        self.tray_mode_state = not current_state
+
+        self.btn_toggle_use_tray.setIcon(
+            self.set_toggle_state(not current_state))
+        self.cfg_handler.set('app', {'use_tray': not current_state})
+
+        self.launcher.use_tray_mode = not current_state
+
+    def use_games_banner(self):
+        current_state = self.games_banner_state
+        self.games_banner_state = not current_state
+
+        self.btn_toggle_display_game_banner.setIcon(
+            self.set_toggle_state(not current_state))
+        self.cfg_handler.set('app', {'use_games_banner': not current_state})
+
+        self.launcher.display_games_banner = not current_state

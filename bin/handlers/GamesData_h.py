@@ -160,7 +160,9 @@ class GamesDataH(DatabaseH):
         self.check_db_exists()
 
     def get_exe_path(self) -> tuple[str] | None:
-        exe_path = QFileDialog.getOpenFileName(filter='*.exe')[0]
+        exe_path = QFileDialog.getOpenFileName(
+            caption='Выберите исполняемый файл игры', 
+            filter='*.exe')[0]
 
         if len(exe_path):
             exe_path = Path(exe_path).resolve()

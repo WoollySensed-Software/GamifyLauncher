@@ -23,7 +23,7 @@ def main(style: str) -> None:
     app.setWindowIcon(QIcon(f'{ICONS['app.ico']}'.replace('\\', '/')))
     app.setStyleSheet(style)
 
-    launcher = LauncherUI()
+    launcher = LauncherUI(app)
     launcher.setup_ui()
     launcher.show()
 
