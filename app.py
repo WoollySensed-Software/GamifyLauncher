@@ -20,7 +20,7 @@ def main(style: str) -> None:
     app.setApplicationVersion(__version__)
     app.setApplicationName(__codename__)
     app.setOrganizationName(__author__)
-    app.setWindowIcon(QIcon(f'{ICONS['app.ico']}'.replace('\\', '/')))
+    app.setWindowIcon(QIcon(f'{ICONS['app.ico']}'))
     app.setStyleSheet(style)
 
     launcher = LauncherUI(app)

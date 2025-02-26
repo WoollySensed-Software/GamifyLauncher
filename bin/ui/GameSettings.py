@@ -78,7 +78,7 @@ class GameSettingsUI(QWidget):
         # --- кнопка: минимализация ---
         self.btn_nav_bar_minimize = QPushButton()
         self.btn_nav_bar_minimize.setIcon(QIcon(
-            f'{ICONS['minimization.png']}'.replace('\\', '/')))
+            f'{ICONS['minimization.png']}'))
         self.btn_nav_bar_minimize.setIconSize(QSize(20, 20))
         self.btn_nav_bar_minimize.setFixedSize(QSize(30, 30))
         self.btn_nav_bar_minimize.setObjectName('NB-Buttuns')
@@ -87,7 +87,7 @@ class GameSettingsUI(QWidget):
         # --- кнопка: закрыть окно ---
         self.btn_nav_bar_exit = QPushButton()
         self.btn_nav_bar_exit.setIcon(QIcon(
-            f'{ICONS['exit.png']}'.replace('\\', '/')))
+            f'{ICONS['exit.png']}'))
         self.btn_nav_bar_exit.setIconSize(QSize(20, 20))
         self.btn_nav_bar_exit.setFixedSize(QSize(30, 30))
         self.btn_nav_bar_exit.setObjectName('NB-Buttuns')
@@ -122,7 +122,7 @@ class GameSettingsUI(QWidget):
         
         self.btn_open_game_folder = QPushButton()
         self.btn_open_game_folder.setIcon(QIcon(
-            f'{ICONS['folder.png']}'.replace('\\', '/')))
+            f'{ICONS['folder.png']}'))
         self.btn_open_game_folder.setIconSize(QSize(25, 25))
         self.btn_open_game_folder.setFixedSize(QSize(30, 30))
         self.btn_open_game_folder.setObjectName('GS-EditButtons')
@@ -157,7 +157,7 @@ class GameSettingsUI(QWidget):
 
         self.btn_change_exe_path = QPushButton()
         self.btn_change_exe_path.setIcon(QIcon(
-            f'{ICONS['edit.png']}'.replace('\\', '/')))
+            f'{ICONS['folder-empty.png']}'))
         self.btn_change_exe_path.setIconSize(QSize(35, 35))
         self.btn_change_exe_path.setFixedSize(QSize(40, 40))
         self.btn_change_exe_path.setObjectName('GS-EditButtons')
@@ -194,7 +194,7 @@ class GameSettingsUI(QWidget):
 
         self.btn_change_ico_path = QPushButton()
         self.btn_change_ico_path.setIcon(QIcon(
-            f'{ICONS['edit.png']}'.replace('\\', '/')))
+            f'{ICONS['folder-empty.png']}'))
         self.btn_change_ico_path.setIconSize(QSize(35, 35))
         self.btn_change_ico_path.setFixedSize(QSize(40, 40))
         self.btn_change_ico_path.setObjectName('GS-EditButtons')
@@ -231,7 +231,7 @@ class GameSettingsUI(QWidget):
 
         self.btn_change_banner_path = QPushButton()
         self.btn_change_banner_path.setIcon(QIcon(
-            f'{ICONS['edit.png']}'.replace('\\', '/')))
+            f'{ICONS['folder-empty.png']}'))
         self.btn_change_banner_path.setIconSize(QSize(35, 35))
         self.btn_change_banner_path.setFixedSize(QSize(40, 40))
         self.btn_change_banner_path.setObjectName('GS-EditButtons')
@@ -266,7 +266,7 @@ class GameSettingsUI(QWidget):
         self.btn_ok = QPushButton()
         self.btn_ok.setFont(self.spec_font)
         self.btn_ok.setText('ОК')
-        self.btn_ok.setFixedSize(QSize(50, 20))
+        self.btn_ok.setFixedSize(QSize(50, 30))
         self.btn_ok.setObjectName('GS-ControlButtons')
         self.btn_ok.clicked.connect(self.close)
         
@@ -274,7 +274,7 @@ class GameSettingsUI(QWidget):
         self.btn_apply = QPushButton()
         self.btn_apply.setFont(self.spec_font)
         self.btn_apply.setText('Применить')
-        self.btn_apply.setFixedSize(QSize(150, 20))
+        self.btn_apply.setFixedSize(QSize(150, 30))
         self.btn_apply.setObjectName('GS-ControlButtons')
         self.btn_apply.clicked.connect(self.apply)
 

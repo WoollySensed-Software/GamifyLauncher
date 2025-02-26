@@ -62,7 +62,7 @@ class AppSettingsUI(QWidget):
         # --- кнопка: минимализация ---
         self.btn_nav_bar_minimize = QPushButton()
         self.btn_nav_bar_minimize.setIcon(QIcon(
-            f'{ICONS['minimization.png']}'.replace('\\', '/')))
+            f'{ICONS['minimization.png']}'))
         self.btn_nav_bar_minimize.setIconSize(QSize(20, 20))
         self.btn_nav_bar_minimize.setFixedSize(QSize(30, 30))
         self.btn_nav_bar_minimize.setObjectName('NB-Buttuns')
@@ -71,7 +71,7 @@ class AppSettingsUI(QWidget):
         # --- кнопка: закрыть окно ---
         self.btn_nav_bar_exit = QPushButton()
         self.btn_nav_bar_exit.setIcon(QIcon(
-            f'{ICONS['exit.png']}'.replace('\\', '/')))
+            f'{ICONS['exit.png']}'))
         self.btn_nav_bar_exit.setIconSize(QSize(20, 20))
         self.btn_nav_bar_exit.setFixedSize(QSize(30, 30))
         self.btn_nav_bar_exit.setObjectName('NB-Buttuns')
@@ -325,8 +325,8 @@ class AppSettingsUI(QWidget):
 
     def set_toggle_state(self, cfg_state: bool):
         if cfg_state:
-            return QIcon(f'{ICONS['switch-on.png']}'.replace('\\', '/'))
-        else: return QIcon(f'{ICONS['switch-off.png']}'.replace('\\', '/'))
+            return QIcon(f'{ICONS['switch-on.png']}')
+        else: return QIcon(f'{ICONS['switch-off.png']}')
 
     def change_app_theme(self):
         theme = self.cb_choose_theme.currentText()
