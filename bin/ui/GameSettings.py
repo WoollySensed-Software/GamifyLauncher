@@ -1,37 +1,44 @@
 from pathlib import Path
 
-from PySide6.QtGui import QCursor, QFont, QIcon, QTextOption
-from PySide6.QtCore import (
-    Qt, QSize, QPoint, 
-    QIODevice, QProcess
-)
-from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, 
-    QRadioButton, QButtonGroup, QLineEdit, 
-    QHBoxLayout, QVBoxLayout, QSpacerItem, 
-    QSizePolicy, QSizeGrip, QApplication, 
-    QScrollArea, QTextEdit, QFileDialog
-)
+from PySide6.QtGui import (QCursor, QFont, QIcon, 
+                           QTextOption)
+from PySide6.QtCore import Qt, QSize, QProcess
+from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, 
+                               QLineEdit, QHBoxLayout, QVBoxLayout, 
+                               QSpacerItem, QSizePolicy, QTextEdit, 
+                               QFileDialog, QLineEdit)
 
 from settings import ICONS
-from bin.handlers.GamesData_h import GamesDataH
+from bin.handlers._Database_h import DatabaseH
+from bin.handlers._AboutGames_h import AboutGamesH
 
 
 type PartOfUI = None
 
 
+class Separator(QLabel):
+
+    def __init__(self):
+        super().__init__()
+
+        self.setFixedHeight(1)
+        self.setStyleSheet('background: #28282B;')
+
+
 class GameSettingsUI(QWidget):
 
-    def __init__(self, launcher: QWidget, game_attrs: dict):
+    def __init__(self, launcher: QWidget, game_title: str):
         super().__init__()
         self.old_pos = None
+        
         self.default_font = QFont('Sans Serif', 16)
         self.spec_font = QFont('Sans Serif', 14)
         self.path_font = QFont('Sans Serif', 12)
 
-        self.games_data_h = GamesDataH()
-        self.game_attrs = game_attrs
-
+        self.db_h = DatabaseH()
+        self.about_games_h = AboutGamesH()
+        
+        self.game_title = game_title
         self.launcher = launcher
     
     def setup_ui(self):
@@ -72,13 +79,11 @@ class GameSettingsUI(QWidget):
         self.lbl_nav_bar_title.setFont(self.spec_font)
         self.lbl_nav_bar_title.setText('Свойства')
         self.lbl_nav_bar_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # self.lbl_nav_bar_title.setFixedWidth(200)
         self.lbl_nav_bar_title.setObjectName('NB-Title')
 
         # --- кнопка: минимализация ---
         self.btn_nav_bar_minimize = QPushButton()
-        self.btn_nav_bar_minimize.setIcon(QIcon(
-            f'{ICONS['minimization.png']}'))
+        self.btn_nav_bar_minimize.setIcon(QIcon(ICONS['minimization.png']))
         self.btn_nav_bar_minimize.setIconSize(QSize(20, 20))
         self.btn_nav_bar_minimize.setFixedSize(QSize(30, 30))
         self.btn_nav_bar_minimize.setObjectName('NB-Buttuns')
@@ -86,8 +91,7 @@ class GameSettingsUI(QWidget):
 
         # --- кнопка: закрыть окно ---
         self.btn_nav_bar_exit = QPushButton()
-        self.btn_nav_bar_exit.setIcon(QIcon(
-            f'{ICONS['exit.png']}'))
+        self.btn_nav_bar_exit.setIcon(QIcon(ICONS['exit.png']))
         self.btn_nav_bar_exit.setIconSize(QSize(20, 20))
         self.btn_nav_bar_exit.setFixedSize(QSize(30, 30))
         self.btn_nav_bar_exit.setObjectName('NB-Buttuns')
@@ -101,8 +105,8 @@ class GameSettingsUI(QWidget):
         # --- горизонтальный layout для панели навигации: зависимости ---
         self.nav_bar_hlayout.addWidget(self.lbl_nav_bar_title)
         self.nav_bar_hlayout.addSpacerItem(QSpacerItem(50, 30, 
-            QSizePolicy.Policy.Expanding, 
-            QSizePolicy.Policy.Minimum))
+                                                       QSizePolicy.Policy.Expanding, 
+                                                       QSizePolicy.Policy.Minimum))
         self.nav_bar_hlayout.addWidget(self.btn_nav_bar_minimize)
         self.nav_bar_hlayout.addWidget(self.btn_nav_bar_exit)
 
@@ -112,17 +116,15 @@ class GameSettingsUI(QWidget):
         self.widget_frame_general_area.setObjectName('GeneralAreaFrame3')
 
         # --- отображение: название игры ---
-        self.ted_game_title = QTextEdit()
-        self.ted_game_title.setFont(self.spec_font)
-        self.ted_game_title.insertPlainText(self.game_attrs['title'])
-        self.ted_game_title.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.ted_game_title.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.ted_game_title.setFixedHeight(30)
-        self.ted_game_title.setObjectName('ted_game_title')
+        self.led_game_title = QLineEdit()
+        self.led_game_title.setFont(self.spec_font)
+        self.led_game_title.setText(self.game_title)
+        self.led_game_title.setMaxLength(40)
+        self.led_game_title.setFixedHeight(30)
+        self.led_game_title.setObjectName('led_game_title')
         
         self.btn_open_game_folder = QPushButton()
-        self.btn_open_game_folder.setIcon(QIcon(
-            f'{ICONS['folder.png']}'))
+        self.btn_open_game_folder.setIcon(QIcon(ICONS['folder.png']))
         self.btn_open_game_folder.setIconSize(QSize(25, 25))
         self.btn_open_game_folder.setFixedSize(QSize(30, 30))
         self.btn_open_game_folder.setObjectName('GS-EditButtons')
@@ -133,14 +135,14 @@ class GameSettingsUI(QWidget):
         self.game_title_hlayout.setContentsMargins(0, 0, 0, 0)
         self.game_title_hlayout.setSpacing(0)
 
-        self.game_title_hlayout.addWidget(self.ted_game_title)
+        self.game_title_hlayout.addWidget(self.led_game_title)
         self.game_title_hlayout.addWidget(self.btn_open_game_folder)
 
         # --- отображение: путь до exe-файла ---
         self.lbl_exe_path = QLabel()
         self.lbl_exe_path.setFont(self.spec_font)
         self.lbl_exe_path.setText('Расположение')
-        self.lbl_exe_path.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        self.lbl_exe_path.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.lbl_exe_path.setFixedHeight(40)
         self.lbl_exe_path.setObjectName('GS-Labels')
 
@@ -150,14 +152,13 @@ class GameSettingsUI(QWidget):
         self.ted_exe_path.setWordWrapMode(QTextOption.WrapMode.NoWrap)
         self.ted_exe_path.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.ted_exe_path.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.ted_exe_path.insertPlainText(self.game_attrs['exe_path'])
-        self.ted_exe_path.setFixedSize(QSize(300, 40))
+        self.ted_exe_path.insertPlainText(self.db_h.get_exe_path(self.game_title))
+        self.ted_exe_path.setFixedSize(QSize(500, 40))
         self.ted_exe_path.setStyleSheet(r'QScrollBar:horizontal {height: 10px;}')
         self.ted_exe_path.setObjectName('GS-TedPaths')
 
         self.btn_change_exe_path = QPushButton()
-        self.btn_change_exe_path.setIcon(QIcon(
-            f'{ICONS['folder-empty.png']}'))
+        self.btn_change_exe_path.setIcon(QIcon(ICONS['folder-empty.png']))
         self.btn_change_exe_path.setIconSize(QSize(35, 35))
         self.btn_change_exe_path.setFixedSize(QSize(40, 40))
         self.btn_change_exe_path.setObjectName('GS-EditButtons')
@@ -176,7 +177,7 @@ class GameSettingsUI(QWidget):
         self.lbl_ico_path = QLabel()
         self.lbl_ico_path.setFont(self.spec_font)
         self.lbl_ico_path.setText('Иконка')
-        self.lbl_ico_path.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        self.lbl_ico_path.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.lbl_ico_path.setFixedHeight(40)
         self.lbl_ico_path.setObjectName('GS-Labels')
 
@@ -186,15 +187,13 @@ class GameSettingsUI(QWidget):
         self.ted_ico_path.setWordWrapMode(QTextOption.WrapMode.NoWrap)
         self.ted_ico_path.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.ted_ico_path.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.ted_ico_path.insertPlainText(
-            str(self.games_data_h.get_ico_path(self.game_attrs['title'])))
-        self.ted_ico_path.setFixedSize(QSize(300, 40))
+        self.ted_ico_path.insertPlainText(self.db_h.get_ico_path(self.game_title))
+        self.ted_ico_path.setFixedSize(QSize(500, 40))
         self.ted_ico_path.setStyleSheet(r'QScrollBar:horizontal {height: 10px;}')
         self.ted_ico_path.setObjectName('GS-TedPaths')
 
         self.btn_change_ico_path = QPushButton()
-        self.btn_change_ico_path.setIcon(QIcon(
-            f'{ICONS['folder-empty.png']}'))
+        self.btn_change_ico_path.setIcon(QIcon(ICONS['folder-empty.png']))
         self.btn_change_ico_path.setIconSize(QSize(35, 35))
         self.btn_change_ico_path.setFixedSize(QSize(40, 40))
         self.btn_change_ico_path.setObjectName('GS-EditButtons')
@@ -205,6 +204,7 @@ class GameSettingsUI(QWidget):
         self.ico_path_hlayout.setContentsMargins(0, 0, 0, 0)
         self.ico_path_hlayout.setSpacing(5)
 
+        # --- размещение в горизонтальный layout: зависимости ---
         self.ico_path_hlayout.addWidget(self.lbl_ico_path)
         self.ico_path_hlayout.addWidget(self.ted_ico_path)
         self.ico_path_hlayout.addWidget(self.btn_change_ico_path)
@@ -213,7 +213,7 @@ class GameSettingsUI(QWidget):
         self.lbl_banner_path = QLabel()
         self.lbl_banner_path.setFont(self.spec_font)
         self.lbl_banner_path.setText('Баннер')
-        self.lbl_banner_path.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        self.lbl_banner_path.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.lbl_banner_path.setFixedHeight(40)
         self.lbl_banner_path.setObjectName('GS-Labels')
 
@@ -223,15 +223,13 @@ class GameSettingsUI(QWidget):
         self.ted_banner_path.setWordWrapMode(QTextOption.WrapMode.NoWrap)
         self.ted_banner_path.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.ted_banner_path.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.ted_banner_path.insertPlainText(
-            str(self.games_data_h.get_banner_path(self.game_attrs['title'])))
-        self.ted_banner_path.setFixedSize(QSize(300, 40))
+        self.ted_banner_path.insertPlainText(self.db_h.get_banner_path(self.game_title))
+        self.ted_banner_path.setFixedSize(QSize(500, 40))
         self.ted_banner_path.setStyleSheet(r'QScrollBar:horizontal {height: 10px;}')
         self.ted_banner_path.setObjectName('GS-TedPaths')
 
         self.btn_change_banner_path = QPushButton()
-        self.btn_change_banner_path.setIcon(QIcon(
-            f'{ICONS['folder-empty.png']}'))
+        self.btn_change_banner_path.setIcon(QIcon(ICONS['folder-empty.png']))
         self.btn_change_banner_path.setIconSize(QSize(35, 35))
         self.btn_change_banner_path.setFixedSize(QSize(40, 40))
         self.btn_change_banner_path.setObjectName('GS-EditButtons')
@@ -242,6 +240,7 @@ class GameSettingsUI(QWidget):
         self.banner_path_hlayout.setContentsMargins(0, 0, 0, 0)
         self.banner_path_hlayout.setSpacing(5)
 
+        # --- размещение в горизонтальный layout: зависимости ---
         self.banner_path_hlayout.addWidget(self.lbl_banner_path)
         self.banner_path_hlayout.addWidget(self.ted_banner_path)
         self.banner_path_hlayout.addWidget(self.btn_change_banner_path)
@@ -251,13 +250,17 @@ class GameSettingsUI(QWidget):
         # --- вертикальный layout для главной области ---
         self.general_area_vlayout = QVBoxLayout(self.widget_frame_general_area)
         self.general_area_vlayout.setContentsMargins(10, 10, 10, 10)
-        self.general_area_vlayout.setSpacing(0)
+        self.general_area_vlayout.setSpacing(5)
 
         # --- вертикальный layout для главной области: зависимости ---
         self.general_area_vlayout.addLayout(self.game_title_hlayout)
+        self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addLayout(self.exe_path_hlayout)
+        self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addLayout(self.ico_path_hlayout)
+        self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addLayout(self.banner_path_hlayout)
+        self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addSpacing(10)
         self.general_area_vlayout.addLayout(self.control_buttons)
 
@@ -283,6 +286,7 @@ class GameSettingsUI(QWidget):
         self.control_buttons.setContentsMargins(0, 0, 0, 0)
         self.control_buttons.setSpacing(0)
 
+        # --- размещение в горизонтальный layout: зависимости ---
         self.control_buttons.addWidget(self.btn_ok, 
                                        alignment=Qt.AlignmentFlag.AlignLeft)
         self.control_buttons.addSpacerItem(QSpacerItem(10, 10, 
@@ -291,41 +295,33 @@ class GameSettingsUI(QWidget):
         self.control_buttons.addWidget(self.btn_apply, 
                                        alignment=Qt.AlignmentFlag.AlignRight)
 
-    def _change_title(self):
-        new_title = self.ted_game_title.toPlainText()
-        self.games_data_h.edit_game_title(self.game_attrs['title'], 
-                                          new_title)
-    
     def _change_exe_path(self):
         new_exe_path = QFileDialog.getOpenFileName(filter='*.exe')[0]
 
         if len(new_exe_path):
-            self.games_data_h.edit_exe_path(self.game_attrs['exe_path'], 
-                                            new_exe_path)
+            self.db_h.edit_exe_path(self.db_h.get_exe_path(self.game_title), 
+                                    new_exe_path)
 
     def _change_ico_path(self):
         new_ico_path = QFileDialog.getOpenFileName(
             filter='*.ico; *.png; *.jpg; *.jpeg')[0]
 
         if len(new_ico_path):
-            self.games_data_h.edit_ico_path(self.game_attrs['title'], 
-                                            new_ico_path)
+            self.db_h.edit_ico_path(self.game_title, new_ico_path)
 
     def _change_banner_path(self):
         new_banner_path = QFileDialog.getOpenFileName(
             filter='*.ico; *.png; *.jpg; *.jpeg')[0]
         
         if len(new_banner_path):
-            self.games_data_h.edit_banner_path(self.game_attrs['title'], 
-                                               new_banner_path)
+            self.db_h.edit_banner_path(self.game_title, new_banner_path)
 
     def apply(self):
-        self.games_data_h.edit_game_title(self.game_attrs['title'], 
-                                          self.ted_game_title.toPlainText())
+        self.db_h.edit_game_title(self.game_title, self.led_game_title.text())
         
         # вынужненные меры, я не знаю как сделать иначе :(
-        self.launcher.active_game_attrs['title'] = self.ted_game_title.toPlainText()
-        self.launcher.games_lib = self.games_data_h.gen_games_lib()
+        self.launcher.active_game_title = self.led_game_title.text()
+        self.launcher.games_lib = self.about_games_h.gen_games_list()
         self.launcher.clear_layout(self.launcher.scroll_layout)
         self.launcher.fill_games_lib(self.launcher.games_lib)
 
@@ -359,7 +355,7 @@ class GameSettingsUI(QWidget):
             self.move(self.pos() + delta)
 
     def open_game_folder(self):
-        folder_path = self.games_data_h.get_game_folder(self.game_attrs['title'])
+        folder_path = self.db_h.get_game_folder(self.game_title)
         
         self.process = QProcess()
         self.process.startCommand(f'explorer {folder_path}')

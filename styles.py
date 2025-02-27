@@ -62,7 +62,7 @@ STYLE_LIGHT = """
         color: black;
     }
     QMenu::item:selected {
-        color: red;
+        color: #ffea00;
     }
 
     QLabel#NB-Title {
@@ -151,12 +151,12 @@ STYLE_LIGHT = """
         color: black;
     }
     
-    QTextEdit#ted_game_title {
+    QLineEdit#led_game_title {
         background: transparent;
         color: black;
         border: 0px;
     }
-    QTextEdit#ted_game_title:hover {
+    QLineEdit#led_game_title:hover {
         background: rgba(211, 211, 211, 0.2);
     }
 
@@ -276,14 +276,14 @@ STYLE_DARK = """
     QPushButton#AG-GameSettings:pressed {
         background: rgba(0, 173, 255, 0.5);
     }
-
+    
     QMenu::item {
         color: black;
     }
     QMenu::item:selected {
-        color: red;
+        color: #ffea00;
     }
-
+    
     QLabel#NB-Title {
         background: #28282B;
         color: #ffea00;
@@ -343,7 +343,7 @@ STYLE_DARK = """
 
     QPushButton#AS-ToggleBtn {
         background: transparent;
-        border-radius: 10%;
+        border-radius: 15%;
     }
     QPushButton#AS-ToggleBtn:hover {
         background: rgba(0, 173, 255, 0.2);
@@ -355,7 +355,7 @@ STYLE_DARK = """
     QPushButton#AS-ImportExportBtn {
         background: transparent;
         color: white;
-        border-radius: 10%;
+        border-radius: 15%;
     }
     QPushButton#AS-ImportExportBtn:hover {
         background: rgba(0, 173, 255, 0.2);
@@ -369,12 +369,12 @@ STYLE_DARK = """
         color: white;
     }
     
-    QTextEdit#ted_game_title {
+    QLineEdit#led_game_title {
         background: transparent;
         color: white;
         border: 0px;
     }
-    QTextEdit#ted_game_title:hover {
+    QLineEdit#led_game_title:hover {
         background: rgba(211, 211, 211, 0.2);
     }
 

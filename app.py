@@ -13,14 +13,21 @@ def get_app_theme() -> str:
     cfg_handler = ConfigurationH(CFG_PATH, use_exists_check=False)
     cfg_handler.exists()
 
-    return cfg_handler.get('app')['theme']
+    theme = cfg_handler.get('app')['theme']
+
+    if theme == 'Light':
+        style = STYLE_LIGHT
+    elif theme == 'Dark':
+        style = STYLE_DARK
+
+    return style
 
 def main(style: str) -> None:
     app = QApplication(sys.argv)
     app.setApplicationVersion(__version__)
     app.setApplicationName(__codename__)
     app.setOrganizationName(__author__)
-    app.setWindowIcon(QIcon(f'{ICONS['app.ico']}'))
+    app.setWindowIcon(QIcon(ICONS['app.ico']))
     app.setStyleSheet(style)
 
     launcher = LauncherUI(app)
@@ -31,11 +38,4 @@ def main(style: str) -> None:
 
 
 if __name__ == '__main__':
-    theme = get_app_theme()
-
-    if theme == 'Light':
-        style = STYLE_LIGHT
-    elif theme == 'Dark':
-        style = STYLE_DARK
-    
-    main(style)
+    main(get_app_theme())

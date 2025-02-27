@@ -1,18 +1,17 @@
 from pathlib import Path
 
-from PySide6.QtGui import QCursor, QFont, QIcon, QPixmap, QImage
-from PySide6.QtCore import Qt, QSize, QProcess, QPoint
+from PySide6.QtGui import QCursor, QFont, QIcon
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, 
                                QHBoxLayout, QVBoxLayout, QSpacerItem, 
-                               QSizePolicy, QSizeGrip, QScrollArea, 
-                               QMenu, QSystemTrayIcon, QStyle, 
-                               QFrame, QFileDialog, QComboBox, 
+                               QSizePolicy, QFileDialog, QComboBox, 
                                QApplication)
 
 from styles import STYLE_DARK, STYLE_LIGHT
-from settings import ICONS, CFG_PATH, PROJECT_PATH, GAMES_LIB_PATH
+from settings import ICONS, CFG_PATH, GAMES_LIB_PATH
 from bin.handlers.Configuration_h import ConfigurationH
-from bin.handlers.GamesData_h import GamesDataH
+from bin.handlers._Database_h import DatabaseH
+from bin.handlers._AboutGames_h import AboutGamesH
 
 
 class Separator(QLabel):
@@ -29,13 +28,20 @@ class AppSettingsUI(QWidget):
     def __init__(self, launcher: QWidget, app: QApplication):
         super().__init__()
         self.old_pos = None
+        
         self.default_font = QFont('Sans Serif', 16)
         self.spec_font = QFont('Sans Serif', 14)
 
-        self.cfg_handler = ConfigurationH(CFG_PATH, use_exists_check=False)
-        self.games_data_h = GamesDataH()
+        self.config()
+        
+        self.db_h = DatabaseH()
+        self.about_games_h = AboutGamesH()
+
         self.launcher = launcher
         self.app = app
+    
+    def config(self):
+        self.cfg_handler = ConfigurationH(CFG_PATH, use_exists_check=False)
         self.tray_mode_state = self.cfg_handler.get('app')['use_tray']
         self.games_banner_state = self.cfg_handler.get('app')['use_games_banner']
     
@@ -44,7 +50,6 @@ class AppSettingsUI(QWidget):
         self.setWindowTitle('Настройки')
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | 
                             Qt.WindowType.WindowStaysOnTopHint)
-        # self.setMaximumSize(QSize(800, 600))
         self.setObjectName('AppSettingsUI')
 
         # --- панель навигации ---
@@ -61,8 +66,7 @@ class AppSettingsUI(QWidget):
 
         # --- кнопка: минимализация ---
         self.btn_nav_bar_minimize = QPushButton()
-        self.btn_nav_bar_minimize.setIcon(QIcon(
-            f'{ICONS['minimization.png']}'))
+        self.btn_nav_bar_minimize.setIcon(QIcon(ICONS['minimization.png']))
         self.btn_nav_bar_minimize.setIconSize(QSize(20, 20))
         self.btn_nav_bar_minimize.setFixedSize(QSize(30, 30))
         self.btn_nav_bar_minimize.setObjectName('NB-Buttuns')
@@ -70,8 +74,7 @@ class AppSettingsUI(QWidget):
 
         # --- кнопка: закрыть окно ---
         self.btn_nav_bar_exit = QPushButton()
-        self.btn_nav_bar_exit.setIcon(QIcon(
-            f'{ICONS['exit.png']}'))
+        self.btn_nav_bar_exit.setIcon(QIcon(ICONS['exit.png']))
         self.btn_nav_bar_exit.setIconSize(QSize(20, 20))
         self.btn_nav_bar_exit.setFixedSize(QSize(30, 30))
         self.btn_nav_bar_exit.setObjectName('NB-Buttuns')
@@ -106,9 +109,8 @@ class AppSettingsUI(QWidget):
         self.cb_choose_theme = QComboBox()
         self.cb_choose_theme.setFont(self.default_font)
         self.cb_choose_theme.addItems(self.items_choose_theme)
-        self.cb_choose_theme.setCurrentIndex(
-            self.items_choose_theme.index(self.cfg_handler.get('app')['theme']))
-        # self.cb_choose_theme.setFixedSize(QSize(150, 30))
+        self.cb_choose_theme.setCurrentIndex(self.items_choose_theme.index(
+            self.cfg_handler.get('app')['theme']))
         self.cb_choose_theme.setFixedHeight(30)
         self.cb_choose_theme.setMinimumWidth(100)
         self.cb_choose_theme.setObjectName('cb_choose_theme')
@@ -173,17 +175,16 @@ class AppSettingsUI(QWidget):
         # --- выбор: сворачивание приложения в трей ---
         self.lbl_use_tray = QLabel()
         self.lbl_use_tray.setFont(self.default_font)
-        self.lbl_use_tray.setText('Сворачивать приложение в трей при закрытии')
+        self.lbl_use_tray.setText('Сворачивать в трей при закрытии')
         self.lbl_use_tray.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.lbl_use_tray.setFixedHeight(30)
         self.lbl_use_tray.setObjectName('AS-OptionLabel')
 
         self.btn_toggle_use_tray = QPushButton()
         self.btn_toggle_use_tray.setIcon(self.set_toggle_state(self.tray_mode_state))
-        self.btn_toggle_use_tray.setIconSize(QSize(70, 40))
+        self.btn_toggle_use_tray.setIconSize(QSize(80, 50))
         self.btn_toggle_use_tray.setFixedSize(QSize(60, 30))
         self.btn_toggle_use_tray.setObjectName('AS-ToggleBtn')
-        # self.btn_toggle_use_tray.setStyleSheet('background: transparent;')
         self.btn_toggle_use_tray.clicked.connect(self.use_tray_mode)
 
         # --- горизонтальный layout для трея ---
@@ -200,18 +201,17 @@ class AppSettingsUI(QWidget):
         # --- отображение баннера для игры ---
         self.lbl_display_game_banner = QLabel()
         self.lbl_display_game_banner.setFont(self.default_font)
-        self.lbl_display_game_banner.setText(
-            'Отображать баннер у игр (экспериментально)')
+        self.lbl_display_game_banner.setText('Отображать баннер (экспериментально)')
         self.lbl_display_game_banner.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.lbl_display_game_banner.setFixedHeight(30)
         self.lbl_display_game_banner.setObjectName('AS-OptionLabel')
 
         self.btn_toggle_display_game_banner = QPushButton()
-        self.btn_toggle_display_game_banner.setIcon(self.set_toggle_state(self.games_banner_state))
-        self.btn_toggle_display_game_banner.setIconSize(QSize(70, 40))
+        self.btn_toggle_display_game_banner.setIcon(self.set_toggle_state(
+            self.games_banner_state))
+        self.btn_toggle_display_game_banner.setIconSize(QSize(80, 50))
         self.btn_toggle_display_game_banner.setFixedSize(QSize(60, 30))
         self.btn_toggle_display_game_banner.setObjectName('AS-ToggleBtn')
-        # self.btn_toggle_display_game_banner.setStyleSheet('background: transparent;')
         self.btn_toggle_display_game_banner.clicked.connect(self.use_games_banner)
 
         # --- горизонтальный layout для баннера игр ---
@@ -319,24 +319,22 @@ class AppSettingsUI(QWidget):
                 print(f"Произошла ошибка при экспорте базы данных: {e}")
             finally:
                 # вынужненные меры, я не знаю как сделать иначе :(
-                self.launcher.games_lib = self.games_data_h.gen_games_lib()
+                self.launcher.games_lib = self.about_games_h.gen_games_list()
                 self.launcher.clear_layout(self.launcher.scroll_layout)
                 self.launcher.fill_games_lib(self.launcher.games_lib)
 
     def set_toggle_state(self, cfg_state: bool):
         if cfg_state:
-            return QIcon(f'{ICONS['switch-on.png']}')
-        else: return QIcon(f'{ICONS['switch-off.png']}')
+            return QIcon(ICONS['switch-on.png'])
+        else: return QIcon(ICONS['switch-off.png'])
 
     def change_app_theme(self):
         theme = self.cb_choose_theme.currentText()
 
         if theme == 'Dark':
-            print('Применена темная тема!')
             self.cfg_handler.set('app', {'theme': 'Dark'})
             self.app.setStyleSheet(STYLE_DARK)
         elif theme == 'Light':
-            print('Применена светлая тема!')
             self.cfg_handler.set('app', {'theme': 'Light'})
             self.app.setStyleSheet(STYLE_LIGHT)
 
