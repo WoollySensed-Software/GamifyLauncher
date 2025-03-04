@@ -7,7 +7,7 @@ from datetime import date
 from PySide6.QtGui import (QCursor, QFont, QIcon, 
                            QPixmap, QImage, QCloseEvent)
 from PySide6.QtCore import (Qt, QSize, QProcess, 
-                            QPoint)
+                            QPoint, QRect)
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, 
                                QHBoxLayout, QVBoxLayout, QSpacerItem, 
                                QSizePolicy, QScrollArea, QMenu, 
@@ -20,21 +20,7 @@ from bin.handlers.GameTimer_h import GameTimerH
 from bin.ui.AppSettingsUI import AppSettingsUI
 from bin.handlers._Database_h import DatabaseH
 from bin.handlers._AboutGames_h import AboutGamesH
-
-
-class CustomGameTitleButton(QPushButton):
-    def __init__(self):
-        super().__init__()
-        self.setObjectName('CustomGameTitleButton')
-
-
-class Separator(QLabel):
-
-    def __init__(self):
-        super().__init__()
-
-        self.setFixedHeight(1)
-        self.setStyleSheet('background: #28282B;')
+from bin.handlers.CustomWidgets import CustomGameTitleButton, Separator
 
 
 class LauncherUI(QWidget):
@@ -62,8 +48,8 @@ class LauncherUI(QWidget):
         self.cfg_handler = ConfigurationH(CFG_PATH, use_exists_check=False)
         self.default_display_w = self.cfg_handler.get('app')['display_w']
         self.default_display_h = self.cfg_handler.get('app')['display_h']
-        self.display_games_banner = self.cfg_handler.get('app')['use_games_banner']
         self.use_tray_mode = self.cfg_handler.get('app')['use_tray']
+        self.display_games_banner = self.cfg_handler.get('game')['use_games_banner']
 
     def setup_ui(self):
         # --- настройки окна ---
@@ -268,14 +254,10 @@ class LauncherUI(QWidget):
         super().resizeEvent(event)
 
         if hasattr(self, 'banner_pixmap'):
-            self.update_banner_size()
+            self.update_about_game()
     
-    def update_banner_size(self):
-        b_width = self.widget_frame_about_game.width()
-        b_height = 200
-
-        # Обновляем изображение
-        self.lbl_banner.resize(b_width, b_height)
+    def update_about_game(self):
+        self.about_game(self.active_game_title)
 
     def closeEvent(self, event: QCloseEvent):
         if self.use_tray_mode:
@@ -369,8 +351,6 @@ class LauncherUI(QWidget):
                 self.active_game_title = el['title']
                 break
 
-        pos = QCursor.pos() - QPoint(310, 180)
-        global_pos = self.mapToGlobal(pos)
         context_menu = QMenu()
 
         # --- доступные действия ---
@@ -379,7 +359,7 @@ class LauncherUI(QWidget):
         action_2 = context_menu.addAction('Удалить из библиотеки')
         action_3 = context_menu.addAction('Свойства')
 
-        selected_action = context_menu.exec(global_pos)
+        selected_action = context_menu.exec(QCursor.pos() + QPoint(10, 10))
 
         if selected_action == action_1:
             self.launch_game()
@@ -410,12 +390,31 @@ class LauncherUI(QWidget):
         self.lbl_banner.resize(self.b_width, self.b_height)
 
         # --- название игры ---
+        text_align = self.db_h.get_text_align(self.active_game_title)
+        
+        if text_align == 'Right':
+            self.arg = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        elif text_align == 'Center':
+            self.arg = Qt.AlignmentFlag.AlignCenter
+        elif text_align == 'Left': 
+            self.arg = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+
+        banner_rect = self.lbl_banner.geometry()
+        banner_w = banner_rect.width()
+        banner_h = banner_rect.height()
+
         self.lbl_game_title = QLabel(self.widget_frame_banner)
         self.lbl_game_title.setFont(QFont('Sans Serif', 32))
         self.lbl_game_title.setText(self.active_game_title)
-        self.lbl_game_title.move(QPoint(10, 100))
-        self.lbl_game_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.lbl_game_title.setFixedSize(banner_w, banner_h + 50)
+        self.lbl_game_title.setAlignment(self.arg)
         self.lbl_game_title.setObjectName('AG-GameTitle')
+
+        self.display_title_state = self.db_h.get_display_title_state(
+            self.active_game_title)
+
+        if not self.display_title_state:
+            self.lbl_game_title.hide()
 
     def display_about_game(self):
         # # --- название игры ---
@@ -546,15 +545,17 @@ class LauncherUI(QWidget):
         self.about_games_h.change_game_total_time(self.active_game_title, 
                                                   self.game_timer_h.get_time())
         
-        # корректировка отображения последнего запуска и игрого времени 
-        self.lbl_last_game_launch.setText(
-            '<html><head/><body><p>Последний запуск:<br>' + 
-            '<span style="color: #ffea00">' + 
-            f'{self.db_h.get_game_last_launch(self.active_game_title)}' + 
-            '</span></p></body></html>')
-        self.lbl_total_game_time.setText(
-            '<html><head/><body><p>Вы играли:<br><span style="color: #ffea00">' + 
-            f'{self.time_formatting()}</span></p></body></html>')
+        # корректировка отображения последнего запуска и игрого времени
+        if hasattr(self, 'lbl_last_game_launch'):
+            self.lbl_last_game_launch.setText(
+                '<html><head/><body><p>Последний запуск:<br>' + 
+                '<span style="color: #ffea00">' + 
+                f'{self.db_h.get_game_last_launch(self.active_game_title)}' + 
+                '</span></p></body></html>')
+        if hasattr(self, 'lbl_total_game_time'):
+            self.lbl_total_game_time.setText(
+                '<html><head/><body><p>Вы играли:<br><span style="color: #ffea00">' + 
+                f'{self.time_formatting()}</span></p></body></html>')
         
         self.show()
         self.showNormal()

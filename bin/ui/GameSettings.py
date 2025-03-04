@@ -1,3 +1,5 @@
+import os
+
 from pathlib import Path
 
 from PySide6.QtGui import (QCursor, QFont, QIcon, 
@@ -6,23 +8,12 @@ from PySide6.QtCore import Qt, QSize, QProcess
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, 
                                QLineEdit, QHBoxLayout, QVBoxLayout, 
                                QSpacerItem, QSizePolicy, QTextEdit, 
-                               QFileDialog, QLineEdit)
+                               QFileDialog, QLineEdit, QComboBox)
 
 from settings import ICONS
 from bin.handlers._Database_h import DatabaseH
 from bin.handlers._AboutGames_h import AboutGamesH
-
-
-type PartOfUI = None
-
-
-class Separator(QLabel):
-
-    def __init__(self):
-        super().__init__()
-
-        self.setFixedHeight(1)
-        self.setStyleSheet('background: #28282B;')
+from bin.handlers.CustomWidgets import Separator
 
 
 class GameSettingsUI(QWidget):
@@ -40,6 +31,7 @@ class GameSettingsUI(QWidget):
         
         self.game_title = game_title
         self.launcher = launcher
+        self.display_title_state = self.db_h.get_display_title_state(self.game_title)
     
     def setup_ui(self):
         """WindowSettings"""
@@ -68,7 +60,7 @@ class GameSettingsUI(QWidget):
         self.general_vlayout.addWidget(self.widget_frame_general_area)
         """/GeneralLayout"""
 
-    def __navigation_bar_ui(self) -> PartOfUI:
+    def __navigation_bar_ui(self):
         # --- панель навигации ---
         self.widget_frame_nav_bar = QWidget()
         self.widget_frame_nav_bar.setFixedHeight(30)
@@ -110,7 +102,7 @@ class GameSettingsUI(QWidget):
         self.nav_bar_hlayout.addWidget(self.btn_nav_bar_minimize)
         self.nav_bar_hlayout.addWidget(self.btn_nav_bar_exit)
 
-    def __general_area_ui(self) -> PartOfUI:
+    def __general_area_ui(self):
         # --- основная область ---
         self.widget_frame_general_area = QWidget()
         self.widget_frame_general_area.setObjectName('GeneralAreaFrame3')
@@ -122,6 +114,13 @@ class GameSettingsUI(QWidget):
         self.led_game_title.setMaxLength(40)
         self.led_game_title.setFixedHeight(30)
         self.led_game_title.setObjectName('led_game_title')
+
+        self.lbl_folder_size = QLabel()
+        self.lbl_folder_size.setFont(self.path_font)
+        self.lbl_folder_size.setText(self.format_size(self.folder_size()))
+        self.lbl_folder_size.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_folder_size.setFixedHeight(30)
+        self.lbl_folder_size.setObjectName('lbl_folder_size')
         
         self.btn_open_game_folder = QPushButton()
         self.btn_open_game_folder.setIcon(QIcon(ICONS['folder.png']))
@@ -133,9 +132,10 @@ class GameSettingsUI(QWidget):
         # --- размещение в горизонтальный layout ---
         self.game_title_hlayout = QHBoxLayout()
         self.game_title_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.game_title_hlayout.setSpacing(0)
+        self.game_title_hlayout.setSpacing(5)
 
         self.game_title_hlayout.addWidget(self.led_game_title)
+        self.game_title_hlayout.addWidget(self.lbl_folder_size)
         self.game_title_hlayout.addWidget(self.btn_open_game_folder)
 
         # --- отображение: путь до exe-файла ---
@@ -172,6 +172,9 @@ class GameSettingsUI(QWidget):
         self.exe_path_hlayout.addWidget(self.lbl_exe_path)
         self.exe_path_hlayout.addWidget(self.ted_exe_path)
         self.exe_path_hlayout.addWidget(self.btn_change_exe_path)
+        self.exe_path_hlayout.addSpacerItem(QSpacerItem(45, 40, 
+                                                    QSizePolicy.Policy.Fixed, 
+                                                    QSizePolicy.Policy.Fixed))
 
         # --- отображение: путь до иконки ---
         self.lbl_ico_path = QLabel()
@@ -199,6 +202,13 @@ class GameSettingsUI(QWidget):
         self.btn_change_ico_path.setObjectName('GS-EditButtons')
         self.btn_change_ico_path.clicked.connect(self._change_ico_path)
 
+        self.btn_reset_ico_path = QPushButton()
+        self.btn_reset_ico_path.setIcon(QIcon(ICONS['reset.png']))
+        self.btn_reset_ico_path.setIconSize(QSize(35, 35))
+        self.btn_reset_ico_path.setFixedSize(QSize(40, 40))
+        self.btn_reset_ico_path.setObjectName('GS-EditButtons')
+        self.btn_reset_ico_path.clicked.connect(self.reset_ico_path)
+
         # --- размещение в горизонтальный layout ---
         self.ico_path_hlayout = QHBoxLayout()
         self.ico_path_hlayout.setContentsMargins(0, 0, 0, 0)
@@ -208,6 +218,7 @@ class GameSettingsUI(QWidget):
         self.ico_path_hlayout.addWidget(self.lbl_ico_path)
         self.ico_path_hlayout.addWidget(self.ted_ico_path)
         self.ico_path_hlayout.addWidget(self.btn_change_ico_path)
+        self.ico_path_hlayout.addWidget(self.btn_reset_ico_path)
 
         # --- отображение: путь до баннера ---
         self.lbl_banner_path = QLabel()
@@ -235,6 +246,13 @@ class GameSettingsUI(QWidget):
         self.btn_change_banner_path.setObjectName('GS-EditButtons')
         self.btn_change_banner_path.clicked.connect(self._change_banner_path)
 
+        self.btn_reset_banner_path = QPushButton()
+        self.btn_reset_banner_path.setIcon(QIcon(ICONS['reset.png']))
+        self.btn_reset_banner_path.setIconSize(QSize(35, 35))
+        self.btn_reset_banner_path.setFixedSize(QSize(40, 40))
+        self.btn_reset_banner_path.setObjectName('GS-EditButtons')
+        self.btn_reset_banner_path.clicked.connect(self.reset_banner_path)
+
         # --- размещение в горизонтальный layout ---
         self.banner_path_hlayout = QHBoxLayout()
         self.banner_path_hlayout.setContentsMargins(0, 0, 0, 0)
@@ -244,6 +262,64 @@ class GameSettingsUI(QWidget):
         self.banner_path_hlayout.addWidget(self.lbl_banner_path)
         self.banner_path_hlayout.addWidget(self.ted_banner_path)
         self.banner_path_hlayout.addWidget(self.btn_change_banner_path)
+        self.banner_path_hlayout.addWidget(self.btn_reset_banner_path)
+
+        # --- расположения текста на баннере ---
+        self.lbl_text_align = QLabel()
+        self.lbl_text_align.setFont(self.default_font)
+        self.lbl_text_align.setText('Расположение текста на баннере')
+        self.lbl_text_align.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.lbl_text_align.setFixedHeight(30)
+        self.lbl_text_align.setObjectName('AS-OptionLabel')
+
+        self.items_text_align = ['Left', 'Center', 'Right']
+        self.cb_text_align = QComboBox()
+        self.cb_text_align.setFont(self.default_font)
+        self.cb_text_align.addItems(self.items_text_align)
+        self.cb_text_align.setCurrentIndex(self.items_text_align.index(
+            self.db_h.get_text_align(self.game_title)))
+        self.cb_text_align.setFixedSize(QSize(85, 30))
+        self.cb_text_align.setObjectName('GS-TextAlign')
+        self.cb_text_align.currentTextChanged.connect(self.change_text_align)
+
+        # --- горизонтальный layout для расположения текста ---
+        self.text_align_hlayout = QHBoxLayout()
+        self.text_align_hlayout.setContentsMargins(0, 0, 0, 0)
+        self.text_align_hlayout.setSpacing(5)
+
+        # --- горизонтальный layout для расположения текста: зависимости ---
+        self.text_align_hlayout.addWidget(self.lbl_text_align)
+        self.text_align_hlayout.addWidget(self.cb_text_align, 
+                                          alignment=Qt.AlignmentFlag.AlignRight)
+        
+        # --- отображение название на баннере ---
+        self.lbl_display_title = QLabel()
+        self.lbl_display_title.setFont(self.default_font)
+        self.lbl_display_title.setText('Отображать название на баннере')
+        self.lbl_display_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.lbl_display_title.setFixedHeight(30)
+        self.lbl_display_title.setObjectName('AS-OptionLabel')
+
+        self.btn_toggle_display_title = QPushButton()
+        self.btn_toggle_display_title.setIcon(self.set_toggle_state(
+            self.display_title_state))
+        self.btn_toggle_display_title.setIconSize(QSize(80, 50))
+        self.btn_toggle_display_title.setFixedSize(QSize(60, 30))
+        self.btn_toggle_display_title.setObjectName('AS-ToggleBtn')
+        self.btn_toggle_display_title.clicked.connect(self.display_title)
+
+        # --- горизонтальный layout для отображение название ---
+        self.display_title_hlayout = QHBoxLayout()
+        self.display_title_hlayout.setContentsMargins(0, 0, 0, 0)
+        self.display_title_hlayout.setSpacing(5)
+
+        # --- горизонтальный layout для отображение название: зависимости ---
+        self.display_title_hlayout.addWidget(self.lbl_display_title)
+        self.display_title_hlayout.addWidget(self.btn_toggle_display_title, 
+                                             alignment=Qt.AlignmentFlag.AlignRight)
+        self.display_title_hlayout.addSpacerItem(QSpacerItem(25, 30, 
+                                                             QSizePolicy.Policy.Fixed, 
+                                                             QSizePolicy.Policy.Fixed))
 
         self.__control_buttons()
 
@@ -260,6 +336,10 @@ class GameSettingsUI(QWidget):
         self.general_area_vlayout.addLayout(self.ico_path_hlayout)
         self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addLayout(self.banner_path_hlayout)
+        self.general_area_vlayout.addWidget(Separator())
+        self.general_area_vlayout.addLayout(self.text_align_hlayout)
+        self.general_area_vlayout.addWidget(Separator())
+        self.general_area_vlayout.addLayout(self.display_title_hlayout)
         self.general_area_vlayout.addWidget(Separator())
         self.general_area_vlayout.addSpacing(10)
         self.general_area_vlayout.addLayout(self.control_buttons)
@@ -316,6 +396,24 @@ class GameSettingsUI(QWidget):
         if len(new_banner_path):
             self.db_h.edit_banner_path(self.game_title, new_banner_path)
 
+    def change_text_align(self):
+        self.db_h.edit_text_align(self.game_title, self.cb_text_align.currentText())
+
+    def set_toggle_state(self, state: bool):
+        if state:
+            return QIcon(ICONS['switch-on.png'])
+        else: return QIcon(ICONS['switch-off.png'])
+
+    def display_title(self):
+        current_state = self.display_title_state
+        self.display_title_state = not current_state
+
+        self.btn_toggle_display_title.setIcon(self.set_toggle_state(
+            not current_state))
+        self.db_h.edit_display_title_state(self.game_title, int(not current_state))
+
+        self.launcher.display_title_state = not current_state
+
     def apply(self):
         self.db_h.edit_game_title(self.game_title, self.led_game_title.text())
         
@@ -324,6 +422,49 @@ class GameSettingsUI(QWidget):
         self.launcher.games_lib = self.about_games_h.gen_games_list()
         self.launcher.clear_layout(self.launcher.scroll_layout)
         self.launcher.fill_games_lib(self.launcher.games_lib)
+
+        self.launcher.update_about_game()
+
+    def reset_ico_path(self):
+        self.db_h.edit_ico_path(self.game_title, ICONS['g_icon.png'])
+
+        self.launcher.games_lib = self.about_games_h.gen_games_list()
+        self.launcher.clear_layout(self.launcher.scroll_layout)
+        self.launcher.fill_games_lib(self.launcher.games_lib)
+
+    def reset_banner_path(self):
+        self.db_h.edit_banner_path(self.game_title, ICONS['g_banner.png'])
+
+        self.launcher.games_lib = self.about_games_h.gen_games_list()
+        self.launcher.clear_layout(self.launcher.scroll_layout)
+        self.launcher.fill_games_lib(self.launcher.games_lib)
+
+    def folder_size(self):
+        path = self.db_h.get_game_folder(self.game_title)
+        total_size = 0
+
+        for root, _, files in os.walk(path):
+            for file in files:
+                try:
+                    total_size += os.path.getsize(os.path.join(root, file))
+                except OSError as e:
+                    print(f'Не удалось получить размер файла {file}: {e}')
+        
+        return total_size
+
+    def format_size(self, size_bytes):
+        if size_bytes == 0:
+            return '0 B'
+        
+        size_name = ('B', 'KB', 'MB', 'GB', 'TB')
+        i = int(size_bytes / 1024)
+        power = 0
+
+        while i >= 1024:
+            i /= 1024
+            power += 1
+        
+        return f'{i:.2f} {size_name[power + 1]}'.replace('.', ',')
 
     # вызывается при нажатии кнопки мыши по форме
     def mousePressEvent(self, event):

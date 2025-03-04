@@ -15,18 +15,20 @@ class DatabaseH:
             cur = con.cursor()
             cur.execute("""
             CREATE TABLE IF NOT EXISTS Games (
-            id	        INTEGER,
-            title	    TEXT NOT NULL UNIQUE,
-            exe_path	TEXT NOT NULL UNIQUE,
+            id	            INTEGER,
+            title	        TEXT NOT NULL UNIQUE,
+            exe_path	    TEXT NOT NULL UNIQUE,
             PRIMARY KEY(id AUTOINCREMENT));
             """)
             cur.execute("""
             CREATE TABLE IF NOT EXISTS GameAttrs (
-            id_title	TEXT UNIQUE,
-            ico_path	TEXT DEFAULT NULL,
-            banner_path	TEXT DEFAULT NULL,
-            game_time	INTEGER DEFAULT 0,
-            last_launch TEXT DEFAULT NULL);
+            id_title	    TEXT UNIQUE,
+            ico_path	    TEXT DEFAULT NULL,
+            banner_path	    TEXT DEFAULT NULL,
+            game_time	    INTEGER DEFAULT 0,
+            last_launch	    TEXT DEFAULT NULL,
+            display_title   INTEGER DEFAULT 1,
+            text_alignment	TEXT DEFAULT 'Left');
             """)
             con.commit()
     
@@ -89,6 +91,20 @@ class DatabaseH:
                         (date, title))
             con.commit()
     
+    def edit_display_title_state(self, title: str, state: int):
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute('UPDATE GameAttrs SET display_title=? WHERE id_title=?', 
+                        (state, title))
+            con.commit()
+    
+    def edit_text_align(self, title: str, alignment: str):
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute('UPDATE GameAttrs SET text_alignment=? WHERE id_title=?', 
+                        (alignment, title))
+            con.commit()
+    
     def get_game_total_time(self, title: str) -> int:
         with sql.connect(self.db_name) as con:
             cur = con.cursor()
@@ -133,5 +149,17 @@ class DatabaseH:
     def get_all_games(self) -> list:
         with sql.connect(self.db_name) as con:
             cur = con.cursor()
-            cur.execute("""SELECT title, exe_path FROM Games""")
+            cur.execute('SELECT title, exe_path FROM Games')
             return cur.fetchall()
+
+    def get_display_title_state(self, title: str) -> int:
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute('SELECT display_title FROM GameAttrs WHERE id_title=?', (title, ))
+            return cur.fetchone()[0]
+
+    def get_text_align(self, title: str) -> str:
+        with sql.connect(self.db_name) as con:
+            cur = con.cursor()
+            cur.execute('SELECT text_alignment FROM GameAttrs WHERE id_title=?', (title, ))
+            return cur.fetchone()[0]

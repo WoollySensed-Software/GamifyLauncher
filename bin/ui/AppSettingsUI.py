@@ -12,15 +12,7 @@ from settings import ICONS, CFG_PATH, GAMES_LIB_PATH
 from bin.handlers.Configuration_h import ConfigurationH
 from bin.handlers._Database_h import DatabaseH
 from bin.handlers._AboutGames_h import AboutGamesH
-
-
-class Separator(QLabel):
-
-    def __init__(self):
-        super().__init__()
-
-        self.setFixedHeight(1)
-        self.setStyleSheet('background: #28282B;')
+from bin.handlers.CustomWidgets import Separator
 
 
 class AppSettingsUI(QWidget):
@@ -43,7 +35,7 @@ class AppSettingsUI(QWidget):
     def config(self):
         self.cfg_handler = ConfigurationH(CFG_PATH, use_exists_check=False)
         self.tray_mode_state = self.cfg_handler.get('app')['use_tray']
-        self.games_banner_state = self.cfg_handler.get('app')['use_games_banner']
+        self.games_banner_state = self.cfg_handler.get('game')['use_games_banner']
     
     def setup_ui(self):
         # --- настройки окна ---
@@ -354,6 +346,6 @@ class AppSettingsUI(QWidget):
 
         self.btn_toggle_display_game_banner.setIcon(
             self.set_toggle_state(not current_state))
-        self.cfg_handler.set('app', {'use_games_banner': not current_state})
+        self.cfg_handler.set('game', {'use_games_banner': not current_state})
 
         self.launcher.display_games_banner = not current_state

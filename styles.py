@@ -217,6 +217,11 @@ STYLE_LIGHT = """
         background: transparent;
         color: black;
     }
+    QLabel#lbl_folder_size {
+        background: transparent;
+        color: black;
+        font-weight: bold;
+    }
 """
 
 STYLE_DARK = """
@@ -439,5 +444,35 @@ STYLE_DARK = """
     QLabel#AG-GameTitle {
         background: transparent;
         color: #ffea00;
+    }
+    QLabel#lbl_folder_size {
+        background: transparent;
+        color: #ffea00;
+        font-weight: bold;
+    }
+
+    QComboBox#GS-TextAlign {
+        background: transparent;
+        color: #ffea00;
+        /*border: 1px solid #28282B;*/
+    }
+    QComboBox#GS-TextAlign:drop-down {
+        width: 0px;
+        height: 0px;
+        border: 0px;
+    }
+    QComboBox#GS-TextAlign QAbstractItemView {
+        background: #343434;
+        color: #ffea00;
+        padding: 5px;
+    }
+    QComboBox#GS-TextAlign QScrollBar {
+        width: 0px;
+        height: 0px;
+        border: 0px;
+    }
+    QComboBox#GS-TextAlign:hover {
+        background: rgba(0, 173, 255, 0.2);
+        border-radius: 1%;
     }
 """
