@@ -4,8 +4,9 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from styles import STYLE_LIGHT, STYLE_DARK
-from settings import ICONS, CFG_PATH, __version__, __codename__, __author__
-from bin.ui._LauncherUI import LauncherUI
+from settings import (__version__, __codename__, __author__, 
+                      ICONS, CFG_PATH)
+from bin.ui.LauncherUI import LauncherUI
 from bin.handlers.Configuration_h import ConfigurationH
 
 
@@ -21,6 +22,7 @@ def get_app_theme() -> str:
         style = STYLE_DARK
 
     return style
+
 
 def main(style: str) -> None:
     app = QApplication(sys.argv)

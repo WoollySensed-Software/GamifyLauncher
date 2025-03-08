@@ -144,7 +144,7 @@ class DatabaseH:
             cur = con.cursor()
             cur.execute('SELECT exe_path FROM Games WHERE title=?', (title, ))
             path = cur.fetchone()[0]
-            return str(Path(path).resolve().parent)
+            return str(Path(path).resolve().parent).replace('\\', '/')
     
     def get_all_games(self) -> list:
         with sql.connect(self.db_name) as con:

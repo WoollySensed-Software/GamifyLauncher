@@ -1,18 +1,16 @@
-from pathlib import Path
-
 from PySide6.QtGui import QCursor, QFont, QIcon
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QMargins
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, 
-                               QHBoxLayout, QVBoxLayout, QSpacerItem, 
-                               QSizePolicy, QFileDialog, QComboBox, 
-                               QApplication)
+                               QSpacerItem, QSizePolicy, QFileDialog, 
+                               QComboBox, QApplication)
 
 from styles import STYLE_DARK, STYLE_LIGHT
 from settings import ICONS, CFG_PATH, GAMES_LIB_PATH
 from bin.handlers.Configuration_h import ConfigurationH
-from bin.handlers._Database_h import DatabaseH
-from bin.handlers._AboutGames_h import AboutGamesH
-from bin.handlers.CustomWidgets import Separator
+from bin.handlers.Database_h import DatabaseH
+from bin.handlers.AboutGames_h import AboutGamesH
+from bin.handlers.CustomWidgets import (Separator, CustomNavButton, CustomHBoxLayout, 
+                                        CustomVBoxLayout)
 
 
 class AppSettingsUI(QWidget):
@@ -57,33 +55,23 @@ class AppSettingsUI(QWidget):
         self.lbl_nav_bar_title.setObjectName('NB-Title')
 
         # --- кнопка: минимализация ---
-        self.btn_nav_bar_minimize = QPushButton()
-        self.btn_nav_bar_minimize.setIcon(QIcon(ICONS['minimization.png']))
-        self.btn_nav_bar_minimize.setIconSize(QSize(20, 20))
-        self.btn_nav_bar_minimize.setFixedSize(QSize(30, 30))
-        self.btn_nav_bar_minimize.setObjectName('NB-Buttuns')
-        self.btn_nav_bar_minimize.clicked.connect(self.showMinimized)
+        self.btn_nav_bar_minimize = CustomNavButton(ICONS['minimization.png'], 
+                                                    self.showMinimized)
 
         # --- кнопка: закрыть окно ---
-        self.btn_nav_bar_exit = QPushButton()
-        self.btn_nav_bar_exit.setIcon(QIcon(ICONS['exit.png']))
-        self.btn_nav_bar_exit.setIconSize(QSize(20, 20))
-        self.btn_nav_bar_exit.setFixedSize(QSize(30, 30))
-        self.btn_nav_bar_exit.setObjectName('NB-Buttuns')
-        self.btn_nav_bar_exit.clicked.connect(self.close)
+        self.btn_nav_bar_exit = CustomNavButton(ICONS['exit.png'], self.close)
 
         # --- горизонтальный layout для панели навигации ---
-        self.nav_bar_hlayout = QHBoxLayout(self.widget_frame_nav_bar)
-        self.nav_bar_hlayout.setContentsMargins(10, 0, 0, 0)
-        self.nav_bar_hlayout.setSpacing(0)
+        self.nav_bar_hlayout = CustomHBoxLayout(self.widget_frame_nav_bar)
 
         # --- горизонтальный layout для панели навигации: зависимости ---
-        self.nav_bar_hlayout.addWidget(self.lbl_nav_bar_title)
-        self.nav_bar_hlayout.addSpacerItem(QSpacerItem(50, 30, 
-                                                       QSizePolicy.Policy.Expanding, 
-                                                       QSizePolicy.Policy.Minimum))
-        self.nav_bar_hlayout.addWidget(self.btn_nav_bar_minimize)
-        self.nav_bar_hlayout.addWidget(self.btn_nav_bar_exit)
+        self.nav_bar_hlayout.add([
+            (self.lbl_nav_bar_title, None), 
+            QSpacerItem(50, 30, 
+                        QSizePolicy.Policy.Expanding, 
+                        QSizePolicy.Policy.Minimum), 
+            (self.btn_nav_bar_minimize, None), 
+            (self.btn_nav_bar_exit, None)])
 
         # --- основная область ---
         self.widget_frame_general_area = QWidget()
@@ -109,14 +97,12 @@ class AppSettingsUI(QWidget):
         self.cb_choose_theme.currentTextChanged.connect(self.change_app_theme)
 
         # --- горизонтальный layout для выбора темы ---
-        self.choose_theme_hlayout = QHBoxLayout()
-        self.choose_theme_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.choose_theme_hlayout.setSpacing(5)
+        self.choose_theme_hlayout = CustomHBoxLayout(spacing=5)
 
         # --- горизонтальный layout для выбора темы: зависимости ---
-        self.choose_theme_hlayout.addWidget(self.lbl_choose_theme)
-        self.choose_theme_hlayout.addWidget(self.cb_choose_theme, 
-                                            alignment=Qt.AlignmentFlag.AlignRight)
+        self.choose_theme_hlayout.add([
+            (self.lbl_choose_theme, None), 
+            (self.cb_choose_theme, Qt.AlignmentFlag.AlignRight)])
 
         # --- импорт/экспорт библиотеки игр ---
         self.lbl_import_export_lib = QLabel()
@@ -146,23 +132,19 @@ class AppSettingsUI(QWidget):
         self.btn_export_lib.clicked.connect(self.export_lib)
 
         # --- горизонтальный layout для кнопок импорта/экспорта ---
-        self.btns_import_export_vlayout = QVBoxLayout()
-        self.btns_import_export_vlayout.setContentsMargins(0, 0, 0, 0)
-        self.btns_import_export_vlayout.setSpacing(0)
-        self.btns_import_export_vlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.btns_import_export_vlayout = CustomVBoxLayout(
+            alignment=Qt.AlignmentFlag.AlignTop)
 
         # --- горизонтальный layout для кнопок импорта/экспорта: зависимости ---
-        self.btns_import_export_vlayout.addWidget(self.btn_import_lib)
-        self.btns_import_export_vlayout.addWidget(self.btn_export_lib)
+        self.btns_import_export_vlayout.add([
+            (self.btn_import_lib, None), (self.btn_export_lib, None)])
 
         # --- горизонтальный layout для импорта/экспорта lib ---
-        self.import_export_hlayout = QHBoxLayout()
-        self.import_export_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.import_export_hlayout.setSpacing(10)
+        self.import_export_hlayout = CustomHBoxLayout(spacing=10)
 
         # --- горизонтальный layout для импорта/экспорта lib: зависимости ---
-        self.import_export_hlayout.addWidget(self.lbl_import_export_lib)
-        self.import_export_hlayout.addLayout(self.btns_import_export_vlayout)
+        self.import_export_hlayout.add([
+            (self.lbl_import_export_lib, None), self.btns_import_export_vlayout])
 
         # --- выбор: сворачивание приложения в трей ---
         self.lbl_use_tray = QLabel()
@@ -180,14 +162,12 @@ class AppSettingsUI(QWidget):
         self.btn_toggle_use_tray.clicked.connect(self.use_tray_mode)
 
         # --- горизонтальный layout для трея ---
-        self.tray_hlayout = QHBoxLayout()
-        self.tray_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.tray_hlayout.setSpacing(5)
+        self.tray_hlayout = CustomHBoxLayout(spacing=5)
 
         # --- горизонтальный layout для трея: зависимости ---
-        self.tray_hlayout.addWidget(self.lbl_use_tray)
-        self.tray_hlayout.addWidget(self.btn_toggle_use_tray, 
-                                    alignment=Qt.AlignmentFlag.AlignRight)
+        self.tray_hlayout.add([
+            (self.lbl_use_tray, None), 
+            (self.btn_toggle_use_tray, Qt.AlignmentFlag.AlignRight)])
 
         # TODO: экспериментальная функция...
         # --- отображение баннера для игры ---
@@ -207,14 +187,12 @@ class AppSettingsUI(QWidget):
         self.btn_toggle_display_game_banner.clicked.connect(self.use_games_banner)
 
         # --- горизонтальный layout для баннера игр ---
-        self.game_banner_hlayout = QHBoxLayout()
-        self.game_banner_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.game_banner_hlayout.setSpacing(5)
+        self.game_banner_hlayout = CustomHBoxLayout(spacing=5)
 
         # --- горизонтальный layout для баннера игр: зависимости ---
-        self.game_banner_hlayout.addWidget(self.lbl_display_game_banner)
-        self.game_banner_hlayout.addWidget(self.btn_toggle_display_game_banner, 
-                                    alignment=Qt.AlignmentFlag.AlignRight)
+        self.game_banner_hlayout.add([
+            (self.lbl_display_game_banner, None), 
+            (self.btn_toggle_display_game_banner, Qt.AlignmentFlag.AlignRight)])
 
         # TODO: сделать позже...
         # --- автоматический поиск игр на диске ---
@@ -225,31 +203,26 @@ class AppSettingsUI(QWidget):
         ...
 
         # --- вертикальный layout для главной области ---
-        self.general_area_vlayout = QVBoxLayout(self.widget_frame_general_area)
-        self.general_area_vlayout.setContentsMargins(10, 10, 10, 10)
-        self.general_area_vlayout.setSpacing(5)
+        self.general_area_vlayout = CustomVBoxLayout(self.widget_frame_general_area, 
+                                                     QMargins(10, 10, 10, 10), 
+                                                     spacing=5)
 
         # --- вертикальный layout для главной области: зависимости ---
-        self.general_area_vlayout.addWidget(Separator())
-        self.general_area_vlayout.addLayout(self.choose_theme_hlayout)
-        self.general_area_vlayout.addWidget(Separator())
-        self.general_area_vlayout.addLayout(self.import_export_hlayout)
-        self.general_area_vlayout.addWidget(Separator())
-        self.general_area_vlayout.addLayout(self.tray_hlayout)
-        self.general_area_vlayout.addWidget(Separator())
-        self.general_area_vlayout.addLayout(self.game_banner_hlayout)
-        self.general_area_vlayout.addWidget(Separator())
+        self.general_area_vlayout.add([
+            (Separator(), None), self.choose_theme_hlayout, 
+            (Separator(), None), self.import_export_hlayout, 
+            (Separator(), None), self.tray_hlayout, 
+            (Separator(), None), self.game_banner_hlayout, 
+            (Separator(), None)])
 
         # --- вертикальный layout для всего окна ---
-        self.general_vlayout = QVBoxLayout(self)
-        self.general_vlayout.setContentsMargins(0, 0, 0, 0)
-        self.general_vlayout.setSpacing(0)
-        self.general_vlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.general_vlayout = CustomVBoxLayout(self, 
+                                                alignment=Qt.AlignmentFlag.AlignTop)
         self.general_vlayout.setObjectName('AS-GeneralVLayout')
 
         # --- вертикальный layout для всего окна: зависимости ---
-        self.general_vlayout.addWidget(self.widget_frame_nav_bar)
-        self.general_vlayout.addWidget(self.widget_frame_general_area)
+        self.general_vlayout.add([
+            (self.widget_frame_nav_bar, None), (self.widget_frame_general_area, None)])
     
     # вызывается при нажатии кнопки мыши по форме
     def mousePressEvent(self, event):
@@ -291,9 +264,8 @@ class AppSettingsUI(QWidget):
                     data = f_in.read()
                 with open(download_dir, 'wb') as f_out:
                     f_out.write(data)
-                print(f"База данных успешно сохранена в {download_dir}")
             except Exception as e:
-                print(f"Произошла ошибка при экспорте базы данных: {e}")
+                print(f'Произошла ошибка при экспорте базы данных: {e}')
     
     def import_lib(self):
         lib_path, _ = QFileDialog.getOpenFileName(
@@ -306,9 +278,8 @@ class AppSettingsUI(QWidget):
                     data = f_in.read()
                 with open(GAMES_LIB_PATH, 'wb') as f_out:
                     f_out.write(data)
-                print(f"База данных успешно сохранена в {GAMES_LIB_PATH}")
             except Exception as e:
-                print(f"Произошла ошибка при экспорте базы данных: {e}")
+                print(f'Произошла ошибка при экспорте базы данных: {e}')
             finally:
                 # вынужненные меры, я не знаю как сделать иначе :(
                 self.launcher.games_lib = self.about_games_h.gen_games_list()

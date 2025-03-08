@@ -7,20 +7,21 @@ from datetime import date
 from PySide6.QtGui import (QCursor, QFont, QIcon, 
                            QPixmap, QImage, QCloseEvent)
 from PySide6.QtCore import (Qt, QSize, QProcess, 
-                            QPoint, QRect)
+                            QPoint)
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, 
-                               QHBoxLayout, QVBoxLayout, QSpacerItem, 
-                               QSizePolicy, QScrollArea, QMenu, 
-                               QSystemTrayIcon, QApplication)
+                               QVBoxLayout, QSpacerItem, QSizePolicy, 
+                               QScrollArea, QMenu, QSystemTrayIcon, 
+                               QApplication)
 
 from settings import CFG_PATH, ICONS, __codename__
 from bin.handlers.Configuration_h import ConfigurationH
 from bin.ui.GameSettings import GameSettingsUI
 from bin.handlers.GameTimer_h import GameTimerH
 from bin.ui.AppSettingsUI import AppSettingsUI
-from bin.handlers._Database_h import DatabaseH
-from bin.handlers._AboutGames_h import AboutGamesH
-from bin.handlers.CustomWidgets import CustomGameTitleButton, Separator
+from bin.handlers.Database_h import DatabaseH
+from bin.handlers.AboutGames_h import AboutGamesH
+from bin.handlers.CustomWidgets import (CustomGameTitleButton, Separator, CustomNavButton, 
+                                        CustomHBoxLayout, CustomVBoxLayout)
 
 
 class LauncherUI(QWidget):
@@ -58,6 +59,7 @@ class LauncherUI(QWidget):
         self.resize(QSize(self.default_display_w, self.default_display_h))
         self.setObjectName('LauncherUI')
 
+        # --- отображение в трей ---
         self.show_tray_mode()
 
         # --- панель навигации ---
@@ -74,7 +76,6 @@ class LauncherUI(QWidget):
 
         self.lbl_nav_bar_app_icon = QLabel()
         self.lbl_nav_bar_app_icon.setPixmap(self.pm_app_icon)
-        self.lbl_nav_bar_app_icon.setStyleSheet('background: transparent;')
         self.lbl_nav_bar_app_icon.setFixedSize(QSize(30, 30))
 
         # --- название ---
@@ -86,52 +87,34 @@ class LauncherUI(QWidget):
         self.lbl_nav_bar_title.setObjectName('NB-Title')
 
         # --- кнопка: настройки ---
-        self.btn_nav_bar_settings = QPushButton()
-        self.btn_nav_bar_settings.setIcon(QIcon(ICONS['settings.png']))
-        self.btn_nav_bar_settings.setIconSize(QSize(20, 20))
-        self.btn_nav_bar_settings.setFixedSize(QSize(30, 30))
-        self.btn_nav_bar_settings.setObjectName('NB-Buttuns')
-        self.btn_nav_bar_settings.clicked.connect(self.show_settings)
+        self.btn_nav_bar_settings = CustomNavButton(ICONS['settings.png'], 
+                                                    self.show_settings)
 
         # --- кнопка: минимализация ---
-        self.btn_nav_bar_minimize = QPushButton()
-        self.btn_nav_bar_minimize.setIcon(QIcon(ICONS['minimization.png']))
-        self.btn_nav_bar_minimize.setIconSize(QSize(20, 20))
-        self.btn_nav_bar_minimize.setFixedSize(QSize(30, 30))
-        self.btn_nav_bar_minimize.setObjectName('NB-Buttuns')
-        self.btn_nav_bar_minimize.clicked.connect(self.showMinimized)
+        self.btn_nav_bar_minimize = CustomNavButton(ICONS['minimization.png'], 
+                                                    self.showMinimized)
 
         # --- кнопка: полный экран/в окне ---
-        self.btn_nav_bar_fullscreen = QPushButton()
-        self.btn_nav_bar_fullscreen.setIcon(QIcon(ICONS['fullscreen.png']))
-        self.btn_nav_bar_fullscreen.setIconSize(QSize(20, 20))
-        self.btn_nav_bar_fullscreen.setFixedSize(QSize(30, 30))
-        self.btn_nav_bar_fullscreen.setObjectName('NB-Buttuns')
-        self.btn_nav_bar_fullscreen.clicked.connect(self.full_screen)
+        self.btn_nav_bar_fullscreen = CustomNavButton(ICONS['fullscreen.png'], 
+                                                      self.full_screen)
 
         # --- кнопка: закрыть окно ---
-        self.btn_nav_bar_exit = QPushButton()
-        self.btn_nav_bar_exit.setIcon(QIcon(ICONS['exit.png']))
-        self.btn_nav_bar_exit.setIconSize(QSize(20, 20))
-        self.btn_nav_bar_exit.setFixedSize(QSize(30, 30))
-        self.btn_nav_bar_exit.setObjectName('NB-Buttuns')
-        self.btn_nav_bar_exit.clicked.connect(self.close)
+        self.btn_nav_bar_exit = CustomNavButton(ICONS['exit.png'], self.close)
 
         # --- горизонтальный layout для панели навигации ---
-        self.nav_bar_hlayout = QHBoxLayout(self.widget_frame_nav_bar)
-        self.nav_bar_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.nav_bar_hlayout.setSpacing(0)
+        self.nav_bar_hlayout = CustomHBoxLayout(self.widget_frame_nav_bar)
 
         # --- горизонтальный layout для панели навигации: зависимости ---
-        self.nav_bar_hlayout.addWidget(self.lbl_nav_bar_app_icon)
-        self.nav_bar_hlayout.addWidget(self.lbl_nav_bar_title)
-        self.nav_bar_hlayout.addSpacerItem(QSpacerItem(50, 30, 
-                                                       QSizePolicy.Policy.Expanding, 
-                                                       QSizePolicy.Policy.Minimum))
-        self.nav_bar_hlayout.addWidget(self.btn_nav_bar_settings)
-        self.nav_bar_hlayout.addWidget(self.btn_nav_bar_minimize)
-        self.nav_bar_hlayout.addWidget(self.btn_nav_bar_fullscreen)
-        self.nav_bar_hlayout.addWidget(self.btn_nav_bar_exit)
+        self.nav_bar_hlayout.add([
+            (self.lbl_nav_bar_app_icon, None), 
+            (self.lbl_nav_bar_title, None), 
+            QSpacerItem(50, 30, 
+                        QSizePolicy.Policy.Expanding, 
+                        QSizePolicy.Policy.Minimum), 
+            (self.btn_nav_bar_settings, None), 
+            (self.btn_nav_bar_minimize, None), 
+            (self.btn_nav_bar_fullscreen, None), 
+            (self.btn_nav_bar_exit, None)])
 
         # --- основная область ---
         self.widget_frame_general_area = QWidget()
@@ -176,56 +159,46 @@ class LauncherUI(QWidget):
         self.btn_games_new_game.clicked.connect(self.add_new_game)
 
         # --- вертикальный layout для списка игр ---
-        self.games_vlayout = QVBoxLayout(self.widget_frame_games)
-        self.games_vlayout.setContentsMargins(0, 0, 0, 0)
-        self.games_vlayout.setSpacing(0)
+        self.games_vlayout = CustomVBoxLayout(self.widget_frame_games)
 
         # --- вертикальный layout для списка игр: зависимости ---
-        self.games_vlayout.addWidget(self.scroll_area)
-        self.games_vlayout.addSpacerItem(QSpacerItem(10, 5, 
-                                                     QSizePolicy.Policy.Expanding, 
-                                                     QSizePolicy.Policy.Fixed))
-        self.games_vlayout.addWidget(self.btn_games_new_game)
+        self.games_vlayout.add([
+            (self.scroll_area, None), 
+            QSpacerItem(10, 5, 
+                        QSizePolicy.Policy.Expanding, 
+                        QSizePolicy.Policy.Fixed), 
+            (self.btn_games_new_game, None)])
         
         # --- заполнение layout'а играми из БД ---
         self.fill_games_lib(lib=self.games_lib)
 
         # --- вертикальный layout для раздела об игре ---
-        self.about_game_vlayout = QVBoxLayout(self.widget_frame_about_game)
-        self.about_game_vlayout.setContentsMargins(0, 0, 0, 0)
-        self.about_game_vlayout.setSpacing(0)
-        self.about_game_vlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.about_game_vlayout = CustomVBoxLayout(self.widget_frame_about_game, 
+                                                   alignment=Qt.AlignmentFlag.AlignTop)
 
         # --- горизонтальный layout для главной области ---
-        self.general_area_hlayout = QHBoxLayout(self.widget_frame_general_area)
-        self.general_area_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.general_area_hlayout.setSpacing(0)
+        self.general_area_hlayout = CustomHBoxLayout(self.widget_frame_general_area)
 
         # --- горизонтальный layout для центральной области: зависимости ---
-        self.general_area_hlayout.addWidget(self.widget_frame_games)
-        self.general_area_hlayout.addWidget(self.widget_frame_about_game)
+        self.general_area_hlayout.add([
+            (self.widget_frame_games, None), 
+            (self.widget_frame_about_game, None)])
 
         # --- футер ---
         self.widget_frame_footer = QWidget()
         self.widget_frame_footer.setFixedHeight(10)
         self.widget_frame_footer.setObjectName('FooterFrame')
 
-        # --- горизонтальный layout для футера ---
-        self.footer_hlayout = QHBoxLayout(self.widget_frame_footer)
-        self.footer_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.footer_hlayout.setSpacing(0)
-
         # --- вертикальный layout для всего окна ---
-        self.general_vlayout = QVBoxLayout(self)
-        self.general_vlayout.setContentsMargins(0, 0, 0, 0)
-        self.general_vlayout.setSpacing(0)
-        self.general_vlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.general_vlayout = CustomVBoxLayout(self, 
+                                                alignment=Qt.AlignmentFlag.AlignTop)
 
         # --- вертикальный layout для всего окна: зависимости ---
-        self.general_vlayout.addWidget(self.widget_frame_nav_bar)
-        self.general_vlayout.addWidget(self.widget_frame_general_area)
-        self.general_vlayout.addSpacing(5)
-        self.general_vlayout.addWidget(self.widget_frame_footer)
+        self.general_vlayout.add([
+            (self.widget_frame_nav_bar, None), 
+            (self.widget_frame_general_area, None), 
+            5, 
+            (self.widget_frame_footer, None)])
     
     def show_settings(self):
         self.app_settings = AppSettingsUI(self, self.app)
@@ -298,7 +271,6 @@ class LauncherUI(QWidget):
 
     def fill_games_lib(self, lib: list):
         for game in lib:
-            # image = QImage(self.games_data_h.get_ico_path(game['title']))
             image = QImage(self.db_h.get_ico_path(game['title']))
             scaled_img = image.scaled(QSize(25, 25), 
                                     Qt.KeepAspectRatio, 
@@ -322,14 +294,10 @@ class LauncherUI(QWidget):
                 lambda checked=False, g=game['title']: self.about_game(g))
             
             # --- горизонтальный layout для списка игр ---
-            layout = QHBoxLayout()
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(0)
+            layout = CustomHBoxLayout()
 
             # --- горизонтальный layout для списка игр: зависимости ---
-            layout.addWidget(lbl_icon)
-            layout.addSpacing(2)
-            layout.addWidget(btn_game_title)
+            layout.add([(lbl_icon, None), 2, (btn_game_title, None)])
 
             self.scroll_layout.addLayout(layout)
 
@@ -463,18 +431,17 @@ class LauncherUI(QWidget):
         self.btn_game_settings.clicked.connect(self.show_game_settings)
 
         # --- горизонтальный layout для кнопок ---
-        self.ag_buttons_hlayout = QHBoxLayout()
-        self.ag_buttons_hlayout.setContentsMargins(0, 0, 0, 0)
-        self.ag_buttons_hlayout.setSpacing(10)
+        self.ag_buttons_hlayout = CustomHBoxLayout(spacing=10)
 
         # --- горизонтальный layout для кнопок: зависимости ---
-        self.ag_buttons_hlayout.addWidget(self.btn_launch_game)
-        self.ag_buttons_hlayout.addWidget(self.lbl_last_game_launch)
-        self.ag_buttons_hlayout.addWidget(self.lbl_total_game_time)
-        self.ag_buttons_hlayout.addSpacerItem(QSpacerItem(50, 30, 
-                                                          QSizePolicy.Policy.Expanding, 
-                                                          QSizePolicy.Policy.Fixed))
-        self.ag_buttons_hlayout.addWidget(self.btn_game_settings)
+        self.ag_buttons_hlayout.add([
+            (self.btn_launch_game, None), 
+            (self.lbl_last_game_launch, None), 
+            (self.lbl_total_game_time, None), 
+            QSpacerItem(50, 30, 
+                        QSizePolicy.Policy.Expanding, 
+                        QSizePolicy.Policy.Fixed),
+            (self.btn_game_settings, None)])
 
     def time_formatting(self) -> str:
         time = self.db_h.get_game_total_time(self.active_game_title)
@@ -496,14 +463,17 @@ class LauncherUI(QWidget):
         self.clear_layout(self.about_game_vlayout)
         
         self.display_about_game()
-        self.about_game_vlayout.addWidget(self.widget_frame_banner)
-        self.about_game_vlayout.addSpacerItem(QSpacerItem(10, 10, 
-                                                          QSizePolicy.Policy.Expanding, 
-                                                          QSizePolicy.Policy.Fixed))
-        self.about_game_vlayout.addLayout(self.ag_buttons_hlayout)
-        self.about_game_vlayout.addSpacing(10)
-        self.about_game_vlayout.addWidget(Separator())
 
+        # --- вертикальный layout для раздела об игре: зависимости ---
+        self.about_game_vlayout.add([
+            (self.widget_frame_banner, None), 
+            QSpacerItem(10, 10, 
+                        QSizePolicy.Policy.Expanding, 
+                        QSizePolicy.Policy.Fixed), 
+            self.ag_buttons_hlayout, 
+            10, 
+            (Separator(), None)])
+        
     def add_new_game(self):
         result = self.about_games_h.get_exe_path_from_dir()
 
@@ -526,6 +496,7 @@ class LauncherUI(QWidget):
 
     def launch_game(self):
         game_folder = Path(self.db_h.get_exe_path(self.active_game_title)).parent
+        game_folder = str(game_folder).replace('\\', '/')
         self.current_folder = os.getcwd()
         self.hide()
 

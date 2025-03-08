@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QFileDialog
 
-from bin.handlers._Database_h import DatabaseH
+from bin.handlers.Database_h import DatabaseH
 
 
 class AboutGamesH:
@@ -19,7 +19,7 @@ class AboutGamesH:
         if len(exe_path):
             exe_path = Path(exe_path).resolve()
             title = exe_path.name
-            return (str(exe_path), title)
+            return (str(exe_path).replace('\\', '/'), title)
         else: return None
     
     def change_game_total_time(self, title: str, time: int):
