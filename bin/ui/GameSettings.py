@@ -327,6 +327,14 @@ class GameSettingsUI(QWidget):
             self.ico_path_hlayout, (Separator(), None), 
             self.banner_path_hlayout, (Separator(), None), 
             10, self.control_buttons])
+        
+        # --- вертикальный layout для всего окна ---
+        self.general_vlayout = CustomVBoxLayout(self, 
+                                                alignment=Qt.AlignmentFlag.AlignTop)
+
+        # --- вертикальный layout для всего окна: зависимости ---
+        self.general_vlayout.add([
+            (self.widget_frame_nav_bar, None), (self.widget_frame_general_area, None)])
     
     # вызывается при нажатии кнопки мыши по форме
     def mousePressEvent(self, event):
