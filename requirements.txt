@@ -1,0 +1,3 @@
+PySide6==6.8.2
+WSS-ToolKit==0.0.4
+psutil==7.0.0
